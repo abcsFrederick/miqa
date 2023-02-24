@@ -1,0 +1,19 @@
+locally install postgre with postgres as user/password, set pg_hha.conf as md5 instead of ident
+
+install postgre with yum install 
+and start/enable
+sudo su - postgre
+psql
+ALTER USER postgres PASSWORD 'postgres';
+
+
+locally install minio
+
+wget https://dl.min.io/server/minio/release/linux-amd64/archive/minio-20221212192727.0.0.x86_64.rpm -O minio.rpm
+sudo dnf install minio.rpm
+
+create minio partition
+assign RWX permission
+
+change user and password to minioAccesskey
+minio server minio/ --console-address :9001
