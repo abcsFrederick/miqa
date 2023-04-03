@@ -107,7 +107,7 @@ export default {
     },
     AIDAviewer () {
       console.log(AIDA_SERVER + this.scans[this.selectedScan].name)
-      window.open(AIDA_SERVER + 'PAMAXZ-0BMX5P_B1/PAMAXZ-0BMX5P_B1.dzi')
+      window.open(AIDA_SERVER + this.scans[this.selectedScan].name)
     },
     async savePermissions() {
       const newSettings = { ...this.currentProject.settings };

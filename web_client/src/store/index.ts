@@ -304,6 +304,7 @@ const initState = {
   me: null,
   allUsers: [],
   reviewMode: true,
+  allExperiments: false,
   globalSettings: undefined as ProjectSettings,
   currentProject: undefined as Project | null,
   currentTaskOverview: null as ProjectTaskOverview | null,
@@ -312,7 +313,12 @@ const initState = {
   experimentIds: [],
   experiments: {},
   experimentScans: {},
+  selectedExperiments: {},
   scans: {},
+  selectedScan: null,
+  hasSegAnalysis: false,
+  hasMyoD1Analysis: false,
+  hasSurvivabilityAnalysis: false,
   scanFrames: {},
   frames: {},
   proxyManager: null,
@@ -339,6 +345,12 @@ const initState = {
     associatedImage: undefined,
   },
   renderOrientation: 'LPS',
+  alert: {
+    show: false,
+    type: undefined,
+    message: undefined
+  },
+  currentDisplayedScans: []
 };
 
 const {
@@ -471,12 +483,37 @@ const {
     setScan(state, { scanId, scan }) {
       // Replace with a new object to trigger a Vuex update
       state.scans = { ...state.scans };
+      scan.analysis.sort((a,b) => a.slurm_id - b.slurm_id)
       state.scans[scanId] = scan;
+    },
+    setScans(state, scans) {
+      // Replace with a new object to trigger a Vuex update
+      state.currentDisplayedScans = scans;
+    },
+    updateSelectScan(state, scanId) {
+      state.hasSegAnalysis = false;
+      state.hasMyoD1Analysis = false;
+      state.hasSurvivabilityAnalysis = false;
+      state.selectedScan = scanId;
+      // Make sure it is existed and finished
+      if (state.scans[scanId].analysis.filter(a => a.analysis_type === 'SEGMENT').length
+        && state.scans[scanId].analysis.filter(a => a.analysis_type === 'SEGMENT')[0].status === 3) {
+        state.hasSegAnalysis = true;
+      }
+      if (state.scans[scanId].analysis.filter(a => a.analysis_type === 'MYOD1').length
+        && state.scans[scanId].analysis.filter(a => a.analysis_type === 'MYOD1')[0].status === 3) {
+        state.hasMyoD1Analysis = true;
+      }
+      if (state.scans[scanId].analysis.filter(a => a.analysis_type === 'SURVIVABILITY').length
+        && state.scans[scanId].analysis.filter(a => a.analysis_type === 'SURVIVABILITY')[0].status === 3) {
+        state.hasSurvivabilityAnalysis = true;
+      }
     },
     setRenderOrientation(state, anatomy) {
       state.renderOrientation = anatomy;
     },
     setCurrentProject(state, project: Project | null) {
+      state.selectedScan = null;
       state.currentProject = project;
       if (project) {
         state.renderOrientation = project.settings.anatomy_orientation;
@@ -500,11 +537,16 @@ const {
       }
       if (state.currentProject && taskOverview.project_id === state.currentProject.id) {
         state.currentTaskOverview = taskOverview;
+        // only apply on current displayed scans to reduce workload
         Object.values(store.state.scans).forEach((scan: Scan) => {
           if (taskOverview.scan_states[scan.id] && taskOverview.scan_states[scan.id] !== 'unreviewed') {
             store.dispatch.reloadScan(scan.id);
           }
         });
+        // reload scan when analysis change
+        Object.values(store.state.currentDisplayedScans).forEach((scan: Scan) => {
+          store.dispatch.reloadScan(scan.id);
+        })
       }
     },
     setProjects(state, projects: Project[]) {
@@ -538,7 +580,9 @@ const {
       state.errorLoadingFrame = value;
     },
     addScanFrames(state, { sid, id }) {
-      state.scanFrames[sid].push(id);
+      if (state.scanFrames[sid].indexOf(id) === -1) {
+        state.scanFrames[sid].push(id);
+      }
     },
     addExperimentScans(state, { eid, sid }) {
       state.scanFrames[sid] = [];
@@ -592,6 +636,17 @@ const {
     switchReviewMode(state, mode) {
       state.reviewMode = mode || false;
     },
+    switchAllExperiments(state, mode) {
+      state.allExperiments = mode || false;
+    },
+    updateAlert(state, {type, message}) {
+      state.alert['show'] = true;
+      state.alert['type'] = type;
+      state.alert['message'] = message;
+      window.setInterval(() => {
+        state.alert['show'] = false;
+      }, 10000)
+    }
   },
   actions: {
     reset({ state, commit }) {
@@ -640,7 +695,6 @@ const {
 
       // place data in state
       const { experiments } = project;
-
       for (let i = 0; i < experiments.length; i += 1) {
         const experiment = experiments[i];
         // set experimentScans[experiment.id] before registering the experiment.id
@@ -667,7 +721,6 @@ const {
           // TODO these requests *can* be run in parallel, or collapsed into one XHR
           // eslint-disable-next-line no-await-in-loop
           const { frames } = scan;
-
           commit('setScan', {
             scanId: scan.id,
             scan: {
@@ -679,6 +732,7 @@ const {
               sessionID: scan.session_id,
               subjectID: scan.subject_id,
               link: scan.scan_link,
+              analysis: scan.analysis,
             },
           });
 
@@ -711,7 +765,7 @@ const {
           }
         }
       }
-      // get the task overview for this project
+      // // get the task overview for this project
       const taskOverview = await djangoRest.projectTaskOverview(project.id);
       commit('setTaskOverview', taskOverview);
     },
@@ -720,6 +774,9 @@ const {
       scanId = scanId || currentFrame.scan;
       if (!scanId) return;
       const scan = await djangoRest.scan(scanId);
+      scan.frames.forEach((frame) => {
+        commit('addScanFrames', { sid: scan.id, id: frame.id });
+      })
       commit('setScan', {
         scanId: scan.id,
         scan: {
@@ -732,6 +789,7 @@ const {
           sessionID: scan.session_id,
           subjectID: scan.subject_id,
           link: scan.scan_link,
+          analysis: scan.analysis,
         },
       });
     },

@@ -1,3 +1,4 @@
+from .analysis import Analysis
 from .evaluation import Evaluation
 from .experiment import Experiment
 from .frame import Frame
@@ -7,6 +8,7 @@ from .scan import Scan
 from .scan_decision import ScanDecision
 
 __all__ = [
+    'Analysis',
     'Evaluation',
     'Experiment',
     'Frame',

@@ -8,11 +8,14 @@ import 'vue-css-donut-chart/dist/vcdonut.css';
 import { mapMutations } from 'vuex';
 import store from '@/store';
 import djangoRest from '@/django';
-import { Project, ScanState } from '@/types';
+import { Project, ScanState, AnalysisState } from '@/types';
 import ExperimentsView from '@/components/ExperimentsView.vue';
 import Navbar from '@/components/Navbar.vue';
 import ProjectSettings from '@/components/ProjectSettings.vue';
 import ProjectUsers from '@/components/ProjectUsers.vue';
+import ImageView from '@/components/ImageView.vue';
+import AnalysisView from '@/components/AnalysisView.vue';
+
 
 Vue.use(Donut);
 
@@ -23,6 +26,8 @@ export default defineComponent({
     Navbar,
     ProjectSettings,
     ProjectUsers,
+    ImageView,
+    AnalysisView
   },
   inject: ['user', 'MIQAConfig'],
   setup() {
@@ -37,6 +42,14 @@ export default defineComponent({
     const currentTaskOverview = computed(() => store.state.currentTaskOverview);
     const projects = computed(() => store.state.projects);
     const isGlobal = computed(() => store.getters.isGlobal);
+
+    const selectedScan = computed(() => store.state.selectedScan);
+    const hasSegAnalysis = computed(() => store.state.hasSegAnalysis);
+    const hasMyoD1Analysis = computed(() => store.state.hasMyoD1Analysis);
+    const hasSurvivabilityAnalysis = computed(() => store.state.hasSurvivabilityAnalysis);
+
+    const alert = computed(() => store.state.alert);
+
     const selectedProjectIndex = ref(projects.value.findIndex(
       (project) => project.id === currentProject.value?.id,
     ));
@@ -44,29 +57,74 @@ export default defineComponent({
       store.dispatch.loadGlobal();
     };
 
-    const overviewSections = ref([]);
+    // const overviewSections = ref([]);
+    const segSections = ref([]);
+    const myod1Sections = ref([]);
+    const survSections = ref([]);
     const scanStates = Object.keys(ScanState);
+    const analysisStates = Object.keys(AnalysisState);
     const setOverviewSections = () => {
       if (projects.value && currentTaskOverview.value) {
-        const scanStateCounts = ref(reactive(
-          scanStates.map(
+        // const scanStateCounts = ref(reactive(
+        //   scanStates.map(
+        //     (stateString) => {
+        //       const stateCount = Object.entries(currentTaskOverview.value.scan_states).filter(
+        //         ([, scanState]) => scanState === stateString.replace(/_/g, ' '),
+        //       ).length;
+        //       return [stateString, stateCount];
+        //     },
+        //   ),
+        // ));
+        const analysisCounts = ref(reactive(
+          analysisStates.map(
             (stateString) => {
-              const stateCount = Object.entries(currentTaskOverview.value.scan_states).filter(
-                ([, scanState]) => scanState === stateString.replace(/_/g, ' '),
-              ).length;
-              return [stateString, stateCount];
+              let count = 0;
+              Object.entries(currentTaskOverview.value.scan_analysis).filter(([, scan_analysis]) => 
+                count = count + Object.entries(scan_analysis).filter(([, analysis]) =>
+                  analysis.analysis_type === stateString.replace(/_/g, ' ')).length)
+              return [stateString, count];
             },
           ),
         ));
-        overviewSections.value = scanStateCounts.value.map(
-          ([stateString, scanCount]: [string, number]) => ({
+        // overviewSections.value = scanStateCounts.value.map(
+        //   ([stateString, scanCount]: [string, number]) => ({
+        //     value: scanCount,
+        //     label: `${stateString.replace(/_/g, ' ')} (${scanCount})`,
+        //     color: ScanState[stateString],
+        //   }),
+        // );
+        segSections.value = analysisCounts.value.filter(
+          ([stateString, scanCount]: [string, number]) =>
+            stateString === "SEGMENT"
+          ).map(([stateString, scanCount]: [string, number]) => ({
             value: scanCount,
             label: `${stateString.replace(/_/g, ' ')} (${scanCount})`,
-            color: ScanState[stateString],
-          }),
+            color: AnalysisState[stateString],
+          })
+        );
+        myod1Sections.value = analysisCounts.value.filter(
+          ([stateString, scanCount]: [string, number]) => 
+            stateString === "MYOD1"
+          ).map(([stateString, scanCount]: [string, number]) => ({
+            value: scanCount,
+            label: `${stateString.replace(/_/g, ' ')} (${scanCount})`,
+            color: AnalysisState[stateString],
+          })
+        );
+        survSections.value = analysisCounts.value.filter(
+          ([stateString, scanCount]: [string, number]) => 
+            stateString === "SURVIVABILITY"
+          ).map(([stateString, scanCount]: [string, number]) => ({
+            value: scanCount,
+            label: `${stateString.replace(/_/g, ' ')} (${scanCount})`,
+            color: AnalysisState[stateString],
+          })
         );
       } else {
-        overviewSections.value = [];
+        // overviewSections.value = [];
+        segSections.value = [];
+        myod1Sections.value = [];
+        survSections.value = [];
       }
     };
 
@@ -116,10 +174,18 @@ export default defineComponent({
       isGlobal,
       overviewPoll,
       selectGlobal,
-      overviewSections,
+      // overviewSections,
+      segSections,
+      myod1Sections,
+      survSections,
       setOverviewSections,
       refreshAllTaskOverviews,
       getProjectFromURL,
+      selectedScan,
+      hasSegAnalysis,
+      hasMyoD1Analysis,
+      hasSurvivabilityAnalysis,
+      alert
     };
   },
   data: () => ({
@@ -328,17 +394,43 @@ export default defineComponent({
           >
             <v-subheader>Overview</v-subheader>
             <vc-donut
-              :sections="overviewSections"
+              :sections="segSections"
               :size="200"
               :thickness="30"
               :total="currentTaskOverview.total_scans"
               has-legend
               legend-placement="right"
             >
-              <h2>{{ currentTaskOverview.total_scans }}</h2>
-              <h4>scans</h4>
-              <p>({{ currentTaskOverview.total_experiments }} experiments)</p>
+              <h4>Segment</h4>
+              <p>({{ currentTaskOverview.total_scans }} scans) <br>
+              ({{ currentTaskOverview.total_experiments }} experiments)</p>
             </vc-donut>
+            <v-container>
+              <v-row style="justify-content: center">
+                <vc-donut
+                  class="ma-1"
+                  :sections="myod1Sections"
+                  :size="200"
+                  :thickness="30"
+                  :total="currentTaskOverview.total_scans"
+                >
+                  <h4>MyoD1</h4>
+                  <p>({{ currentTaskOverview.total_scans }} scans) <br>
+                  ({{ currentTaskOverview.total_experiments }} experiments)</p>
+                </vc-donut>
+                <vc-donut
+                  class="ma-1"
+                  :sections="survSections"
+                  :size="200"
+                  :thickness="30"
+                  :total="currentTaskOverview.total_scans"
+                >
+                  <h4>Survivability</h4>
+                  <p>({{ currentTaskOverview.total_scans }} scans) <br>
+                  ({{ currentTaskOverview.total_experiments }} experiments)</p>
+                </vc-donut>
+              </v-row>
+            </v-container>
           </v-card>
         </div>
         <div
@@ -347,6 +439,12 @@ export default defineComponent({
         >
           <ExperimentsView />
           <ProjectUsers />
+        </div>
+        <div
+          class="flex-container"
+        >
+          <ImageView v-if="selectedScan"/>
+          <AnalysisView v-if="selectedScan && (hasMyoD1Analysis || hasSurvivabilityAnalysis)"/>
         </div>
       </div>
       <v-card
@@ -412,6 +510,14 @@ export default defineComponent({
         </v-layout>
       </v-card>
     </div>
+    <v-alert :value="alert.show"
+      dense
+      text
+      :type="alert.type"
+      transition="slide-y-transition"
+    >
+      {{alert.message}}
+    </v-alert>
   </div>
 </template>
 
@@ -440,5 +546,10 @@ export default defineComponent({
 .mode-toggle {
   align-items: baseline;
   display: inline-block;
+}
+.v-alert {
+  position: fixed;
+  right: 0px;
+  bottom: 0px;
 }
 </style>

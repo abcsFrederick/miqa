@@ -1,6 +1,6 @@
 # flake8: noqa N802
 from __future__ import annotations
-
+import os
 from pathlib import Path
 
 from composed_configuration import (
@@ -37,6 +37,8 @@ class MiqaMixin(ConfigMixin):
 
     # Demo mode is for app.miqaweb.io (Do not enable for normal instances)
     DEMO_MODE = values.BooleanValue(environ=True, default=False)
+    # ITRUST Authentication
+    ITRUST_MODE = values.BooleanValue(environ=True, default=True)
     # It is recommended to enable the following for demo mode:
     NORMAL_USERS_CAN_CREATE_PROJECTS = values.BooleanValue(environ=True, default=False)
     # Enable the following to replace null creation times for scan decisions with import time
@@ -57,6 +59,7 @@ class MiqaMixin(ConfigMixin):
         configuration.INSTALLED_APPS += [
             's3_file_field',
             'guardian',
+            'allauth.socialaccount.providers.openid_connect'
         ]
 
         configuration.TEMPLATES[0]['DIRS'] += [
@@ -85,15 +88,47 @@ class MiqaMixin(ConfigMixin):
             'EXCEPTION_HANDLER'
         ] = 'miqa.core.rest.exceptions.custom_exception_handler'
 
+        configuration.GLOBAL_SETTINGS = {
+            'DATASET': '/scratch/IVG_scratch/ziaeid2/sarcoma/Dataset/',
+            'SHARED_PARTITION': '/mnt/hpc/webdata/server/fsivgl-rms01d/',
+            'INFER_WSI': 'infer_wsi.py',
+            'MYOD1': 'myod1.py',
+            'SURVIVABILITY': 'survivability.py',
+            'COHORT_MYOD1': '/mnt/hpc/webdata/server/fsivgl-rms01d/data/rms_myod1_cohort.csv',
+            'COHORT_SURVIVABILITY': '/mnt/hpc/webdata/server/fsivgl-rms01d/data/rms_survivability_cohort.csv'
+        }
 
+        configuration.SESSIONS_ENGINE='django.contrib.sessions.backends.cache'
+
+        configuration.CACHES = {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+                'LOCATION': '127.0.0.1:11211',
+            }
+        }
 class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
-    HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default='http://localhost:8081')
+    HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default='http://localhost:8081/')
 
+    DevelopmentBaseConfiguration.SOCIALACCOUNT_PROVIDERS = {
+        "openid_connect": {
+            "SERVERS": [
+                {
+                    "id": "itrust",  # 30 characters or less
+                    "name": "ITRUST server",
+                    "server_url": 'https://stsstg.nih.gov',
+                    "token_auth_method": "code",
+                    "APP": {
+                        "client_id": os.getenv('client_id'),
+                        "secret": os.getenv('client_secret'),
+                    },
+                },
+            ]
+        }
+    }
 
 class TestingConfiguration(MiqaMixin, TestingBaseConfiguration):
     # We would like to test that the celery tasks work correctly when triggered from the API
     CELERY_TASK_ALWAYS_EAGER = True
-
 
 class PyppeteerTestingConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     # We would like to test that the celery tasks work correctly when triggered from the API

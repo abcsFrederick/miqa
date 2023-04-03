@@ -1,6 +1,10 @@
 import logging
 import math
+import os
+import subprocess
+import traceback
 
+from django.conf import settings
 import itk
 import monai
 import numpy as np
@@ -328,6 +332,105 @@ def evaluate_many(model, image_paths):
     for index, result in enumerate(results):
         labeled_results[image_paths[index]] = label_results(result)
     return labeled_results
+
+
+def hpc_configure(job_name, env_name, modules, *args, **kwargs):
+    batchscript = """#!/bin/bash
+#SBATCH --partition=gpu
+#SBATCH --job-name={name}
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --gres=gpu:1
+#SBATCH --output={shared_partition_log}/slurm-%x.%j.out
+#SBATCH --error={shared_partition_log}/slurm-%x.%j.err
+
+source /etc/profile.d/modules.sh
+module load {modules}
+mkdir -p {shared_partition_tmp_directory}/slurm-$SLURM_JOB_NAME.$SLURM_JOB_ID
+"""
+    shared_partition = settings.GLOBAL_SETTINGS['SHARED_PARTITION']
+    shared_partition_log = os.path.join(shared_partition, 'logs')
+    shell_path = os.path.join(shared_partition, 'shells')
+    modules_path = os.path.join(shared_partition, 'modules')
+    shared_partition_tmp_directory = os.path.join(shared_partition, 'tmp')
+    python_script_path = os.path.join(modules_path, settings.GLOBAL_SETTINGS[job_name])
+
+    shared_partition_requirements_directory = os.path.join(shared_partition, 'env')
+    env = os.path.join(shared_partition_requirements_directory, env_name)
+
+    pip_command = """source {env}/bin/activate
+"""
+    pip_script = pip_command.format(env=env)
+
+    batchscript += pip_script
+
+    exec_command = """python3.6 {pythonScriptPath} --directory {shared_partition_tmp_directory}/slurm-$SLURM_JOB_NAME.$SLURM_JOB_ID """  # noqa: E501
+
+    for name in kwargs.keys():
+        arg = '--' + str(name) + ' ' + str(kwargs[name]) + ' '
+        exec_command += arg
+
+    batchscript += exec_command
+
+    if not os.path.isdir(shared_partition_log):
+        os.mkdir(shared_partition_log)
+    if not os.path.isdir(shell_path):
+        os.mkdir(shell_path)
+    if not os.path.isdir(modules_path):
+        os.mkdir(modules_path)
+    if not os.path.isdir(shared_partition_tmp_directory):
+        os.mkdir(shared_partition_tmp_directory)
+
+    script = batchscript.format(name=job_name,
+                                shared_partition_log=shared_partition_log,
+                                shared_partition_tmp_directory=shared_partition_tmp_directory,
+                                modules=' '.join(modules),
+                                pythonScriptPath=python_script_path)
+
+    shell_script_path = os.path.join(shell_path, job_name + '.sh')
+    with open(shell_script_path, 'w') as sh:
+        sh.write(script)
+    try:
+        args = ['sbatch']
+        args.append(sh.name)
+        res = subprocess.check_output(args).strip()
+        if not res.startswith(b'Submitted batch'):
+            return None
+        slurm_job_id = int(res.split()[-1])
+        print('slurm job id: ' + str(slurm_job_id))
+        return slurm_job_id
+    except Exception:
+        traceback.print_exc()
+
+
+def seg_evaluate(image_root, prefix, thumb_prefix, job_name, *args, **kwargs):
+    print('Segmentation job_name: ', job_name)
+    slurm_id = hpc_configure(job_name, 'rms_env', kwargs['modules'],
+                             input=image_root, prefix=prefix, thumb_prefix=thumb_prefix)
+
+    return slurm_id
+
+
+def myod1_evaluate(wsi_root, seg_root, myod1_prefix, seg_prefix,
+                   job_name, *args, **kwargs):
+    print('MyoD1 job_name: ', job_name)
+    slurm_id = hpc_configure(job_name, 'rms_myod1_env', kwargs['modules'],
+                             input=wsi_root, segmentation=seg_root,
+                             myod1_prefix=myod1_prefix, seg_prefix=seg_prefix)
+
+    return slurm_id
+
+
+def survivability_evaluate(wsi_root, seg_root,
+                           survivability_prefix, seg_prefix,
+                           fastmode, job_name, *args, **kwargs):
+    print('Survivability job_name: ', job_name)
+    slurm_id = hpc_configure(job_name, 'rms_env', kwargs['modules'],
+                             input=wsi_root, segmentation=seg_root,
+                             survivability_prefix=survivability_prefix, seg_prefix=seg_prefix,
+                             fastmode=fastmode)
+
+    return slurm_id
 
 
 if __name__ == '__main__':

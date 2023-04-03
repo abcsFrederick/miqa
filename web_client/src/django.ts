@@ -188,6 +188,34 @@ const djangoClient = {
     const response = await apiClient.delete(`/experiments/${experimentId}`);
     return response?.data;
   },
+  async getCohort(name: string): Promise<ResponseData> {
+    if (!name) return undefined;
+    const response = await apiClient.get(`/analysis/cohort`, {
+      params: { cohortName: name },
+    });
+    return response?.data;
+  },
+  async runSegment(experiments: string[]): Promise<ResponseData> {
+    if (!experiments) return undefined;
+    const response = await apiClient.post(`/analysis/segment_all`, {
+      params: { experiments: experiments },
+    });
+    return response?.data;
+  },
+  async runMyoD1(experiments: string[]): Promise<ResponseData> {
+    if (!experiments) return undefined;
+    const response = await apiClient.post(`/analysis/myod1_all`, {
+      params: { experiments: experiments },
+    });
+    return response?.data;
+  },
+  async runSurvivability(experiments: string[]): Promise<ResponseData> {
+    if (!experiments) return undefined;
+    const response = await apiClient.post(`/analysis/survivability_all`, {
+      params: { experiments: experiments },
+    });
+    return response?.data;
+  },
   async scans(experimentId: string): Promise<Scan[]> {
     if (!experimentId) return undefined;
     const response = await apiClient.get('/scans', {
@@ -224,6 +252,18 @@ const djangoClient = {
     if (!frameId) return undefined;
     const response = await apiClient.get(`/frames/${frameId}`);
     return response?.data;
+  },
+  async downloadFrame(frameId: string): Promise<Frame> {
+    if (!frameId) return undefined;
+    const response = await apiClient.get(`/frames/${frameId}/download`, {responseType:'blob'});
+    return response?.data;
+  },
+  async downloadThumbnail(frameId: string): Promise<Frame> {
+    if (!frameId) return undefined;
+    const response = await apiClient.get(`/frames/${frameId}/thumbnail`, {responseType:'blob'});
+    if (response.status === 200) {
+      return response?.data;
+    }
   },
   async me(): Promise<User> {
     const response = await apiClient.get('/users/me');

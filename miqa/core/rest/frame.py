@@ -16,7 +16,7 @@ from rest_framework.viewsets import GenericViewSet
 from miqa.core.models import Evaluation, Experiment, Frame, Project, Scan
 from miqa.core.models.frame import StorageMode
 from miqa.core.rest.permissions import project_permission_required
-from miqa.core.tasks import evaluate_frame_content
+from miqa.core.tasks import evaluate_frame_content, wsi_thumbnail
 
 from .permissions import UserHoldsExperimentLock
 
@@ -135,7 +135,10 @@ class FrameViewSet(
         content_serializer = FrameContentSerializer(data=dict(request.data, scan=scan.id))
         content_serializer.is_valid(raise_exception=True)
         new_frame = content_serializer.save()
-        evaluate_frame_content.delay(str(new_frame.id))
+        if FrameSerializer(new_frame).data['extension'] in ['.svs', '.tif']:
+            wsi_thumbnail.delay(str(new_frame.id))
+        else:
+            evaluate_frame_content.delay(str(new_frame.id))
         return Response(
             FrameSerializer(new_frame).data,
             status=status.HTTP_201_CREATED,
@@ -155,3 +158,18 @@ class FrameViewSet(
             resp['Content-Length'] = frame.size
             return resp
         raise BadRequest('This endpoint is only valid for local files on the server machine.')
+
+    @action(detail=True)
+    @project_permission_required(experiments__scans__frames__pk='pk')
+    def thumbnail(self, request, pk=None, **kwargs):
+        frame: Frame = self.get_object()
+
+        if frame.thumbnail_path:
+            if not frame.thumbnail.is_file():
+                return HttpResponseServerError('File no longer exists.')
+
+            fd = open(frame.thumbnail_path, 'rb')
+            resp = FileResponse(fd, filename=str(frame.frame_number))
+            resp['Content-Length'] = frame.thumbnail_size
+            return resp
+        raise BadRequest('This endpoint is only valid for frames that have hathumbnail.')

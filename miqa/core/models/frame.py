@@ -35,10 +35,15 @@ class Frame(TimeStampedModel, models.Model):
     content = S3FileField(null=True)
     raw_path = models.CharField(max_length=500, blank=False)
     frame_number = models.IntegerField(default=0)
+    thumbnail_path = models.CharField(max_length=500, blank=True)
 
     @property
     def path(self) -> Path:
         return Path(self.raw_path)
+
+    @property
+    def thumbnail(self) -> Path:
+        return Path(self.thumbnail_path)
 
     @property
     def zarr_path(self: Frame) -> Path:
@@ -47,6 +52,10 @@ class Frame(TimeStampedModel, models.Model):
     @property
     def size(self) -> int:
         return self.path.stat().st_size
+
+    @property
+    def thumbnail_size(self) -> int:
+        return self.thumbnail.stat().st_size
 
     @property
     def experiment(self) -> Experiment:

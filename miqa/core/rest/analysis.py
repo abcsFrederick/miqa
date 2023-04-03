@@ -34,19 +34,11 @@ class AnalysisSerializer(serializers.ModelSerializer):
         ]
         ref_name = 'scan_analysis'
 
+    scan = serializers.SerializerMethodField('convert_scan')
     status = serializers.SerializerMethodField('get_update')
 
-    def to_representation(self, obj):
-        return {
-            'id': str(obj.id),
-            'slurm_id': obj.slurm_id,
-            'input': obj.input,
-            'output': obj.output,
-            'status': obj.status,
-            'scan': str(obj.scan),
-            'analysis_type': obj.analysis_type,
-            'analysis_result': obj.analysis_result
-        }
+    def convert_scan(self, obj):
+        return obj.scan.id
 
     def get_update(self, obj):
         if obj.status == 3:
@@ -61,7 +53,6 @@ class AnalysisSerializer(serializers.ModelSerializer):
                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             out_put = output.communicate()[0]
             found = re.findall(obj.slurm_id, out_put.decode())
-
             if len(found) == 0:
                 obj.status = 3
                 if Path(obj.analysis_result).is_file():

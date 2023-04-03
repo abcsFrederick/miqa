@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
 from miqa.core.models import Experiment, Project, Scan
+from miqa.core.rest.analysis import AnalysisSerializer
 from miqa.core.rest.frame import FrameSerializer
 from miqa.core.rest.permissions import UserHoldsExperimentLock
 from miqa.core.rest.scan_decision import ScanDecisionSerializer
@@ -18,6 +19,7 @@ class ScanSerializer(serializers.ModelSerializer):
             'name',
             'decisions',
             'frames',
+            'analysis',
             'scan_type',
             'subject_id',
             'session_id',
@@ -27,6 +29,7 @@ class ScanSerializer(serializers.ModelSerializer):
         ref_name = 'experiment_scan'
 
     frames = FrameSerializer(many=True, read_only=True)
+    analysis = AnalysisSerializer(many=True, read_only=True)
     decisions = ScanDecisionSerializer(many=True, read_only=True)
     experiment = serializers.SlugRelatedField(queryset=Experiment.objects.all(), slug_field='id')
 

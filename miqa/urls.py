@@ -9,6 +9,7 @@ from rest_framework.authtoken.views import obtain_auth_token
 from miqa.core.rest import (
     AccountActivateView,
     AccountInactiveView,
+    AnalysisViewSet,
     DemoModeLoginView,
     EmailView,
     ExperimentViewSet,
@@ -21,6 +22,7 @@ from miqa.core.rest import (
     ScanDecisionViewSet,
     ScanViewSet,
     UserViewSet,
+    Viewers
 )
 
 router = routers.SimpleRouter(trailing_slash=False)
@@ -31,6 +33,8 @@ router.register('frames', FrameViewSet, basename='frame')
 router.register('scan-decisions', ScanDecisionViewSet, basename='scan_decisions')
 router.register('global', GlobalSettingsViewSet, basename='global')
 router.register('users', UserViewSet)
+
+router.register('analysis', AnalysisViewSet, basename='analysis')
 
 # OpenAPI generation
 schema_view = get_schema_view(
@@ -54,6 +58,8 @@ urlpatterns = [
     path('api/v1/configuration/', MIQAConfigView.as_view()),
     path('api/docs/redoc/', schema_view.with_ui('redoc'), name='docs-redoc'),
     path('api/docs/swagger/', schema_view.with_ui('swagger'), name='docs-swagger'),
+    path('info/<str:wsi>', Viewers.getInfo, name='info'),
+    path('viewer/<str:wsi>/<int:z>/<int:x>_<int:y>.jpeg', Viewers.getTile, name='viewer'),
 ]
 
 if settings.DEMO_MODE:

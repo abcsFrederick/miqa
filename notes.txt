@@ -17,3 +17,5 @@ assign RWX permission
 
 change user and password to minioAccesskey
 minio server minio/ --console-address :9001
+
+memcached installed for cache tile

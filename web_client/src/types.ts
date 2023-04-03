@@ -39,6 +39,17 @@ interface ScanDecision {
   }
 }
 
+interface analysis {
+  id: string,
+  input: string,
+  ouptut: string,
+  scan: string,
+  slurm_id: string,
+  status: number,
+  analysis_result: string,
+  analysis_type: string,
+}
+
 interface Scan {
   id: string,
   name: string,
@@ -51,6 +62,7 @@ interface Scan {
   session_id: string,
   scan_link: string,
   notes: string,
+  analysis: analysis[]
 }
 
 interface Experiment {
@@ -78,6 +90,12 @@ enum ScanState {
   complete = '#00C853',
 }
 
+enum AnalysisState {
+  SEGMENT = '#2196F3',
+  MYOD1 = '#f44336',
+  SURVIVABILITY = '#4CAF50',
+}
+
 interface ProjectTaskOverview {
   project_id: string,
   total_experiments: number,
@@ -85,6 +103,9 @@ interface ProjectTaskOverview {
   my_project_role: string,
   scan_states: {
     string: string,
+  },
+  scan_analysis: {
+    string: analysis[],
   },
 }
 
@@ -111,5 +132,5 @@ interface Email {
 
 export {
   User, ResponseData, Project, ProjectTaskOverview, ProjectSettings,
-  Scan, ScanDecision, Frame, ScanState, Email, Experiment,
+  Scan, ScanDecision, Frame, ScanState, Email, Experiment, AnalysisState
 };

@@ -27,6 +27,21 @@ IMPORT_CSV_COLUMNS = [
     'location_of_interest',
 ]
 
+IMPORT_CSV_COLUMNS_RMS = [
+    'project_name',
+    'experiment_name',
+    'scan_name',
+    'scan_type',
+    'analysis_type',
+    'ARMS',
+    'ERMS',
+    'Stroma',
+    'Necrosis',
+    'Positive Score',
+    'Second Best',
+    'Mean',
+]
+
 
 def validate_file_locations(input_dict, project, not_found_errors):
     if not isinstance(input_dict, dict):

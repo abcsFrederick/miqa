@@ -187,13 +187,13 @@ export default defineComponent({
         </v-tooltip>
       </template>
     </v-text-field>
-    <v-select
+    <!--<v-select
       v-if="!isGlobal"
       v-model="anatomyOrientation"
       label="Project scans orientation"
       :items="[{text: 'Neurology (LPS)', value: 'LPS'}, {text: 'Radiology (RAS)', value: 'RAS'}]"
       @change="changed = true"
-    />
+    />-->
     <v-flex
       class="d-flex"
       style="flex-direction: row"

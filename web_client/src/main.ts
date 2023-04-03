@@ -39,6 +39,7 @@ Vue.use(promptService(vuetify));
 config.itkModulesPath = STATIC_PATH + config.itkModulesPath;
 
 Vue.config.productionTip = true;
+Vue.prototype.log = console.log;
 
 Sentry.init({
   Vue,

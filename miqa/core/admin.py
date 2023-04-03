@@ -2,7 +2,7 @@
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 
-from .models import Evaluation, Experiment, Frame, Project, Scan, ScanDecision
+from .models import Analysis, Evaluation, Experiment, Frame, Project, Scan, ScanDecision
 
 
 @admin.register(Experiment)
@@ -18,6 +18,13 @@ class FrameAdmin(admin.ModelAdmin):
     list_filter = ('created', 'modified')
     raw_id_fields = ('scan',)
     search_fields = ('name',)
+
+
+@admin.register(Analysis)
+class AnalysisAdmin(admin.ModelAdmin):
+    list_display = ('id', 'input', 'output', 'slurm_id', 'scan', 'status',
+                    'analysis_type', 'analysis_result')
+    list_filter = ('scan', 'analysis_type')
 
 
 @admin.register(Scan)

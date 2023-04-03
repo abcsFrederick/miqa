@@ -10,6 +10,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from miqa.core.models import Project
 from miqa.core.rest.experiment import ExperimentSerializer
 from miqa.core.rest.permissions import project_permission_required
+from miqa.core.rest.scan import ScanSerializer
 from miqa.core.rest.user import UserSerializer
 from miqa.core.tasks import export_data, import_data
 
@@ -61,6 +62,7 @@ class ProjectTaskOverviewSerializer(serializers.ModelSerializer):
             'total_scans',
             'my_project_role',
             'scan_states',
+            'scan_analysis',
             'project_id',
         ]
 
@@ -69,6 +71,7 @@ class ProjectTaskOverviewSerializer(serializers.ModelSerializer):
     total_scans = serializers.SerializerMethodField('get_total_scans')
     my_project_role = serializers.SerializerMethodField('get_my_project_role')
     scan_states = serializers.SerializerMethodField('get_scan_states')
+    scan_analysis = serializers.SerializerMethodField('get_scan_analysis')
 
     def get_total_experiments(self, obj):
         return obj.experiments.count()
@@ -98,6 +101,13 @@ class ProjectTaskOverviewSerializer(serializers.ModelSerializer):
             for exp in obj.experiments.all()
             for scan in exp.scans.all()
         }
+
+    def get_scan_analysis(self, obj):
+        scan_analysis = {}
+        for exp in obj.experiments.all():
+            for scan in exp.scans.all():
+                scan_analysis[str(scan.id)] = ScanSerializer(scan).data['analysis']
+        return scan_analysis
 
 
 class ProjectSerializer(serializers.ModelSerializer):

@@ -1,4 +1,5 @@
 from .accounts import AccountActivateView, AccountInactiveView, DemoModeLoginView, LogoutView
+from .analysis import AnalysisViewSet
 from .email import EmailView
 from .experiment import ExperimentViewSet
 from .frame import FrameViewSet
@@ -9,6 +10,7 @@ from .project import ProjectViewSet
 from .scan import ScanViewSet
 from .scan_decision import ScanDecisionViewSet
 from .user import UserViewSet
+from .viewers import Viewers
 
 __all__ = [
     'ExperimentViewSet',
@@ -25,4 +27,6 @@ __all__ = [
     'ScanDecisionViewSet',
     'EmailView',
     'MIQAConfigView',
+    'AnalysisViewSet',
+    'Viewers'
 ]

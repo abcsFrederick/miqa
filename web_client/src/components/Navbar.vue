@@ -70,7 +70,7 @@ export default defineComponent({
         bottom
       >
         <template #activator="{ on }">
-          <span v-on="on">MIQA</span>
+          <span v-on="on">RMS</span>
         </template>
         <span>{{ MIQAConfig.version || "Demo Instance" }}</span>
       </v-tooltip>
