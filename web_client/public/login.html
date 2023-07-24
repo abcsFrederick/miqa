@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="icon" href="<%= BASE_URL %>favicon.ico">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <title>MIQA</title>
+  </head>
+  <body>
+    <!--<a title="ITRUST server" class="socialaccount_provider itrust block btn flex btn-sm text-[11px] items-center" href="https://stsstg.nih.gov/auth/oauth/v2/authorize?client_id=0b4a535a-9f88-4717-b4af-6b1b0cb48933&response_type=code&redirect_uri=http://localhost:8000/accounts/itrust/login/callback/&scope=email+profile+openid">-->
+    <a title="ITRUST server" class="socialaccount_provider itrust block btn flex btn-sm text-[11px] items-center" href=http://localhost:8000/accounts/itrust/login/?process=login>
+      <i class="ri-itrust-fill mr-3 text-[18px]"></i>
+      Sign in with ITRUST server
+    </a>
+
+    <form class="login" method="POST" action="http://localhost:8000/accounts/login/">
+      <input id='csrf' type="hidden" name="csrfmiddlewaretoken">
+      <p><label for="id_login">E-mail:</label> <input type="email" name="login" placeholder="E-mail address" autocomplete="email" required="" id="id_login"></p>
+      <p><label for="id_password">Password:</label> <input type="password" name="password" placeholder="Password" autocomplete="current-password" required="" id="id_password"></p>
+      
+      <input type="hidden" name="next" value="http://localhost:8000/oauth/authorize/?redirect_uri=http://localhost:8081/client_id=bFgpA9ofn4qoHxOyCEPYrS4cUNnk9i&amp;response_type=code&amp;state=04wlyOWjHy&amp;response_mode=query&amp;code_challenge=JCgVsB-AWtbXnAYAMe0IL3_9q1lIQbPVOJasQXmYdnY&amp;code_challenge_method=S256">
+      <!--<input type="hidden" name="_csrf" value="getCSRF()" />-->
+      <div class="flex items-center justify-between pb-0 pt-5">
+        <a class="secondaryAction link-accent" href="/accounts/password/reset/">
+          Forgot Password?
+        </a>
+        <button class="inline-flex items-center btn btn-primary primaryAction">
+          Sign In
+          <i class="ri-arrow-right-circle-line ml-3 text-xl"></i>
+        </button>
+      </div>
+    </form>
+    <button id='test' class="inline-flex items-center btn btn-primary primaryAction">
+      test Sign In
+      <i class="ri-arrow-right-circle-line ml-3 text-xl"></i>
+    </button>
+  </body>
+</html>
+
+<script type="text/javascript">
+  $('#test').on( "click", function() {
+    var bodyFormData = new FormData()
+    bodyFormData.append('login', 'tymiao1220@gmail.com');
+    bodyFormData.append('password', 'luying0325');
+    var $crf_token = document.cookie.match('(^|;)\\s*csrftoken\\s*=\\s*([^;]+)')?.pop() || '';
+    console.log(bodyFormData)
+    var csrftoken = getCookie('csrftoken');
+    console.log(csrftoken)
+    const request = new Request(
+    'http://localhost:8000/accounts/itrust/login/'
+    // 'http://localhost:8000/accounts/login/',
+    {
+        method: 'GET',
+        headers: {'X-CSRFToken': csrftoken},
+        mode: 'cors' // Do not send CSRF token to another domain.
+    }
+);
+    fetch(request).then(function(response) {
+    console.log(response)
+});
+    // $.ajax({
+    //     type: "POST",
+    //     url: "http://localhost:8000/accounts/login/",
+    //     data: bodyFormData,
+    //     crossDomain: true,
+    //     processData: false,
+    //     contentType: false,
+    //     headers:{
+    //       'Accept': 'application/json',
+    //       'Content-Type': 'application/json',
+    //       'X-CSRFToken': csrftoken},
+    //     success: function (newEnd) {
+    //         console.log(newEnd);
+    //         add_end(newEnd);
+    //     },
+    //     error: function (xhr) {
+    //         alert("There was an error")
+    //         console.log('Request Status: ' + xhr.status + ' Status Text: ' + xhr.statusText + ' ' + xhr.responseText)
+    //     }
+    // });
+  });
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+</script>

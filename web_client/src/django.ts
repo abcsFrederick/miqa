@@ -7,7 +7,7 @@ import {
   ResponseData, Project, ProjectTaskOverview, ProjectSettings, User, Email, Experiment, Scan, Frame,
 } from './types';
 import { API_URL, OAUTH_API_ROOT, OAUTH_CLIENT_ID } from './constants';
-
+// import {OAUTH_REDIRECT_URL} from './constants';
 interface Paginated<T> {
   count: number,
   next: string,
@@ -24,7 +24,9 @@ class ErrorResponseDetail extends Error {
 
 const apiClient = axios.create({ baseURL: API_URL });
 let s3ffClient;
-
+// allauth 8.0.0
+// const oauthClient = new OAuthClient(new URL(OAUTH_API_ROOT), OAUTH_CLIENT_ID, {'scopes':[''], 'redirectUrl': OAUTH_REDIRECT_URL});
+// const oauthClient = new OAuthClient(new URL(OAUTH_API_ROOT), OAUTH_CLIENT_ID)
 const oauthClient = new OAuthClient(OAUTH_API_ROOT, OAUTH_CLIENT_ID);
 const djangoClient = {
   // TODO importing the actual AppStore type results in a dependency cycle
@@ -54,6 +56,7 @@ const djangoClient = {
     }, (error) => Promise.reject(error));
   },
   async login() {
+    // window.location.href = 'http://localhost:8000/accounts/itrust/login/';
     await oauthClient.redirectToLogin();
   },
   async logout() {
@@ -62,6 +65,7 @@ const djangoClient = {
     } finally {
       await oauthClient.logout().then(
         async () => {
+          // window.location.href = 'http://localhost:8000/accounts/itrust/login/';
           await oauthClient.redirectToLogin();
         },
       );

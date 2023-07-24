@@ -31,6 +31,11 @@ class MiqaMixin(ConfigMixin):
     # This is required for the /api/v1/logout/ view to have access to the session cookie.
     CORS_ALLOW_CREDENTIALS = True
 
+    CORS_ORIGIN_ALLOW_ALL = False
+    CORS_ORIGIN_WHITELIST = (
+      'https://fsabcl-onc01d.ncifcrf.gov',
+    )
+
     # MIQA-specific settings
     ZARR_SUPPORT = False
     S3_SUPPORT = True
@@ -82,14 +87,15 @@ class MiqaMixin(ConfigMixin):
             'rest_framework.permissions.IsAuthenticated'
         ]
         configuration.REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += [
-            'rest_framework.authentication.TokenAuthentication',
+            'rest_framework.authentication.TokenAuthentication'
         ]
         configuration.REST_FRAMEWORK[
             'EXCEPTION_HANDLER'
         ] = 'miqa.core.rest.exceptions.custom_exception_handler'
 
         configuration.GLOBAL_SETTINGS = {
-            'DATASET': '/scratch/IVG_scratch/ziaeid2/sarcoma/Dataset/',
+            # 'DATASET': '/scratch/IVG_scratch/ziaeid2/sarcoma/Dataset/',
+            'DATASET': '/var/opt/MIQA/miqa/samples/WSI/',
             'SHARED_PARTITION': '/mnt/hpc/webdata/server/fsivgl-rms01d/',
             'INFER_WSI': 'infer_wsi.py',
             'MYOD1': 'myod1.py',
@@ -107,8 +113,8 @@ class MiqaMixin(ConfigMixin):
             }
         }
 class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
-    HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default='http://localhost:8081/')
-
+    # HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default='http://localhost:8081/')
+    HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default='https://fsabcl-bioi01d.ncifcrf.gov/rms2/')
     DevelopmentBaseConfiguration.SOCIALACCOUNT_PROVIDERS = {
         "openid_connect": {
             "SERVERS": [
@@ -126,6 +132,49 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
         }
     }
 
+    SOCIALACCOUNT_LOGIN_ON_GET = True
+    # ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
+    # ACCOUNT_EMAIL_REQUIRED = False
+    SOCIALACCOUNT_EMAIL_REQUIRED = False
+    # ACCOUNT_AUTHENTICATION_METHOD = 'email'
+    SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
+
+    MIQA_URL_PREFIX = values.Value(environ=True, default='/')
+    WHITENOISE_STATIC_PREFIX = '/static/'
+    
+    ALLOWED_HOSTS = ["*"]
+    SECURE_SSL_REDIRECT = False
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    CSRF_TRUSTED_ORIGINS = values.ListValue(environ=True, default=[])
+
+    USE_X_FORWARDED_HOST = True
+    @property
+    def LOGIN_URL(self):
+        """LOGIN_URL also needs to be behind MIQA_URL_PREFIX."""
+        # return 'http://localhost:8000/accounts/itrust/login/'
+        return 'https://fsivgl-rms01d.ncifcrf.gov/rms2/accounts/itrust/login/'
+
+    @property
+    def STATIC_URL(self):
+        """Prepend the MIQA_URL_PREFIX to STATIC_URL."""
+        return f'{Path(self.MIQA_URL_PREFIX) / "rms2/static"}/'
+
+    @property
+    def LOGIN_REDIRECT_URL(self):
+        # Do not forget to set application in django with corresponding redirect url (with '/')
+        """When login is completed without `next` set, redirect to MIQA_URL_PREFIX."""
+        return 'https://fsabcl-onc01d.ncifcrf.gov/rms2'
+        # return self.MIQA_URL_PREFIX
+
+    @staticmethod
+    def before_binding(configuration: ComposedConfiguration) -> None:
+        # Register static files as templates so that the index.html built by the client is
+        # available as a template.
+        # This should be STATIC_ROOT, but that is bound as a property which cannot be evaluated
+        # at this point, so we make this assumption about staticfiles instead.
+        configuration.TEMPLATES[0]['DIRS'] += [
+            configuration.BASE_DIR / 'staticfiles',
+        ]
 class TestingConfiguration(MiqaMixin, TestingBaseConfiguration):
     # We would like to test that the celery tasks work correctly when triggered from the API
     CELERY_TASK_ALWAYS_EAGER = True
