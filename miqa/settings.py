@@ -33,7 +33,7 @@ class MiqaMixin(ConfigMixin):
 
     CORS_ORIGIN_ALLOW_ALL = False
     CORS_ORIGIN_WHITELIST = (
-      'https://fsabcl-onc01d.ncifcrf.gov',
+      os.getenv('client_host'),
     )
 
     # MIQA-specific settings
@@ -96,12 +96,12 @@ class MiqaMixin(ConfigMixin):
         configuration.GLOBAL_SETTINGS = {
             # 'DATASET': '/scratch/IVG_scratch/ziaeid2/sarcoma/Dataset/',
             'DATASET': '/var/opt/MIQA/miqa/samples/WSI/',
-            'SHARED_PARTITION': '/mnt/hpc/webdata/server/fsivgl-rms01d/',
+            'SHARED_PARTITION': '/mnt/hpc/webdata/server/' + os.getenv('host') + '/',
             'INFER_WSI': 'infer_wsi.py',
             'MYOD1': 'myod1.py',
             'SURVIVABILITY': 'survivability.py',
-            'COHORT_MYOD1': '/mnt/hpc/webdata/server/fsivgl-rms01d/data/rms_myod1_cohort.csv',
-            'COHORT_SURVIVABILITY': '/mnt/hpc/webdata/server/fsivgl-rms01d/data/rms_survivability_cohort.csv'
+            'COHORT_MYOD1': '/mnt/hpc/webdata/server/' + os.getenv('host') + '/data/rms_myod1_cohort.csv',
+            'COHORT_SURVIVABILITY': '/mnt/hpc/webdata/server/' + os.getenv('host') + '/data/rms_survivability_cohort.csv'
         }
 
         configuration.SESSIONS_ENGINE='django.contrib.sessions.backends.cache'
@@ -114,14 +114,14 @@ class MiqaMixin(ConfigMixin):
         }
 class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     # HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default='http://localhost:8081/')
-    HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default='https://fsabcl-bioi01d.ncifcrf.gov/rms2/')
+    HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default=os.getenv('client_host')+'/rms2/')
     DevelopmentBaseConfiguration.SOCIALACCOUNT_PROVIDERS = {
         "openid_connect": {
             "SERVERS": [
                 {
                     "id": "itrust",  # 30 characters or less
                     "name": "ITRUST server",
-                    "server_url": 'https://stsstg.nih.gov',
+                    "server_url": os.getenv('server_url'),
                     "token_auth_method": "code",
                     "APP": {
                         "client_id": os.getenv('client_id'),
@@ -152,7 +152,7 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     def LOGIN_URL(self):
         """LOGIN_URL also needs to be behind MIQA_URL_PREFIX."""
         # return 'http://localhost:8000/accounts/itrust/login/'
-        return 'https://fsivgl-rms01d.ncifcrf.gov/rms2/accounts/itrust/login/'
+        return 'https://' + os.getenv('host') + '.ncifcrf.gov/rms2/accounts/itrust/login/'
 
     @property
     def STATIC_URL(self):
@@ -163,7 +163,7 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     def LOGIN_REDIRECT_URL(self):
         # Do not forget to set application in django with corresponding redirect url (with '/')
         """When login is completed without `next` set, redirect to MIQA_URL_PREFIX."""
-        return 'https://fsabcl-onc01d.ncifcrf.gov/rms2'
+        return os.getenv('client_host') + '/rms2'
         # return self.MIQA_URL_PREFIX
 
     @staticmethod

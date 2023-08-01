@@ -106,8 +106,7 @@ export default {
       return true;
     },
     AIDAviewer () {
-      console.log(AIDA_SERVER + this.scans[this.selectedScan].name)
-      window.open(AIDA_SERVER + this.scans[this.selectedScan].name)
+      window.open(AIDA_SERVER + '?imageId=' + this.scans[this.selectedScan].name);
     },
     async savePermissions() {
       const newSettings = { ...this.currentProject.settings };
