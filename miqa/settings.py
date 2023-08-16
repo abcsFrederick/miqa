@@ -121,7 +121,7 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
                 {
                     "id": "itrust",  # 30 characters or less
                     "name": "ITRUST server",
-                    "server_url": 'https://stsstg.nih.gov',
+                    "server_url": os.getenv('server_url'),
                     "token_auth_method": "code",
                     "APP": {
                         "client_id": os.getenv('client_id'),
