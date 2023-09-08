@@ -35,6 +35,14 @@ class MiqaMixin(ConfigMixin):
     CORS_ORIGIN_WHITELIST = (
       os.getenv('client_host'),
     )
+    
+    # CORS_ALLOWED_ORIGINS = [os.getenv('client_host')]
+    # CORS_ALLOW_HEADERS = ('*')
+    # CORS_EXPOSE_HEADERS = ['Set-Cookie']
+    # CORS_ALLOW_METHODS = [
+    # '*'
+    # ]
+    # SESSION_COOKIE_SECURE = True
 
     # MIQA-specific settings
     ZARR_SUPPORT = False
@@ -132,11 +140,15 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
         }
     }
 
+    ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
+    ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+    ACCOUNT_EMAIL_REQUIRED = True 
+    ACCOUNT_UNIQUE_EMAIL = True 
+    ACCOUNT_USERNAME_REQUIRED = True 
+
     SOCIALACCOUNT_LOGIN_ON_GET = True
-    # ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
-    # ACCOUNT_EMAIL_REQUIRED = False
     SOCIALACCOUNT_EMAIL_REQUIRED = False
-    # ACCOUNT_AUTHENTICATION_METHOD = 'email'
+
     SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
 
     MIQA_URL_PREFIX = values.Value(environ=True, default='/')
@@ -145,15 +157,23 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     ALLOWED_HOSTS = ["*"]
     SECURE_SSL_REDIRECT = False
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    CSRF_TRUSTED_ORIGINS = values.ListValue(environ=True, default=[])
+    
+    CSRF_TRUSTED_ORIGINS = values.ListValue(environ=True, default=['https://fsabcl-onc01d.ncifcrf.gov/', 'https://fsabcl-onc01p.ncifcrf.gov/'])
+    CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
+    CSRF_COOKIE_NAME = 'csrftoken'
+    CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = None
+    SESSION_COOKIE_SAMESITE = None
 
+    MINIO_STORAGE_USE_HTTPS = False
     USE_X_FORWARDED_HOST = True
     @property
     def LOGIN_URL(self):
         """LOGIN_URL also needs to be behind MIQA_URL_PREFIX."""
         # return 'http://localhost:8000/accounts/itrust/login/'
-        return 'https://' + os.getenv('host') + '.ncifcrf.gov/rms2/accounts/itrust/login/'
-
+        # return 'https://' + os.getenv('host') + '.ncifcrf.gov/rms2/accounts/itrust/login/'
+        # return 'https://' + os.getenv('host') + '.ncifcrf.gov/miqa/login.html'
+        return os.getenv('client_host') +'/rms2/login.html'
     @property
     def STATIC_URL(self):
         """Prepend the MIQA_URL_PREFIX to STATIC_URL."""

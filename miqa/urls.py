@@ -5,12 +5,15 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions, routers
 from rest_framework.authtoken.views import obtain_auth_token
+from django.middleware.csrf import get_token
+import miqa.core.views as views
 
 from miqa.core.rest import (
     AccountActivateView,
     AccountInactiveView,
     AnalysisViewSet,
     DemoModeLoginView,
+    CustomizedLoginView,
     EmailView,
     ExperimentViewSet,
     FrameViewSet,
@@ -51,6 +54,7 @@ urlpatterns = [
     path('oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     path('api-token-auth/', obtain_auth_token),
     path('admin/', admin.site.urls),
+    path('getToken', views.getToken, name='getToken'),
     path('api/v1/s3-upload/', include('s3_file_field.urls')),
     path('api/v1/', include(router.urls)),
     path('api/v1/email', EmailView.as_view()),
@@ -62,6 +66,9 @@ urlpatterns = [
     path('viewer/<str:wsi>/<int:z>/<int:x>_<int:y>.jpeg', Viewers.getTile, name='viewer'),
 ]
 
+urlpatterns = [
+    path('accounts/login/', CustomizedLoginView.as_view()),
+] + urlpatterns
 if settings.DEMO_MODE:
     urlpatterns = [
         path('accounts/login/', DemoModeLoginView.as_view()),

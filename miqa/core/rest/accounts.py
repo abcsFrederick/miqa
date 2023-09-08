@@ -119,3 +119,20 @@ class AccountSignupForm(SignupForm):
         min_length=1,
         widget=forms.TextInput(attrs={'placeholder': ('Last name')}),
     )
+
+
+class CustomizedLoginView(LoginView):
+    template_name = 'account_customized_login.html'
+
+    def get_context_data(self, **kwargs):
+        ret = super(LoginView, self).get_context_data(**kwargs)
+        ret.update(
+            {
+                'messages': [
+                    'This is for RMS2 internal user login'
+                ],
+                'account_login': 'https://fsivgl-rms01d.ncifcrf.gov/rms2/accounts/login/',
+                'signup_url': 'https://fsivgl-rms01d.ncifcrf.gov/rms2/accounts/signup/'
+            }
+        )
+        return ret

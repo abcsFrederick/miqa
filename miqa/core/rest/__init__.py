@@ -1,4 +1,4 @@
-from .accounts import AccountActivateView, AccountInactiveView, DemoModeLoginView, LogoutView
+from .accounts import AccountActivateView, AccountInactiveView, DemoModeLoginView, CustomizedLoginView, LogoutView
 from .analysis import AnalysisViewSet
 from .email import EmailView
 from .experiment import ExperimentViewSet
@@ -20,6 +20,7 @@ __all__ = [
     'AccountActivateView',
     'AccountInactiveView',
     'DemoModeLoginView',
+    'CustomizedLoginView',
     'LogoutView',
     'ProjectViewSet',
     'ScanViewSet',
