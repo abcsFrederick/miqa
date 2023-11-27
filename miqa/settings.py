@@ -72,7 +72,8 @@ class MiqaMixin(ConfigMixin):
         configuration.INSTALLED_APPS += [
             's3_file_field',
             'guardian',
-            'allauth.socialaccount.providers.openid_connect'
+            'allauth.socialaccount.providers.openid_connect',
+            'miqa.providers.oauth2'
         ]
 
         configuration.TEMPLATES[0]['DIRS'] += [
@@ -103,11 +104,14 @@ class MiqaMixin(ConfigMixin):
 
         configuration.GLOBAL_SETTINGS = {
             # 'DATASET': '/scratch/IVG_scratch/ziaeid2/sarcoma/Dataset/',
-            'DATASET': '/var/opt/MIQA/miqa/samples/WSI/',
+            # 'DATASET': '/var/opt/MIQA/miqa/samples/WSI/',
+            'DATASET': '/mnt/hpc/webdata/server/fsivgl-rms01d/shared_data/WSI/',
             'SHARED_PARTITION': '/mnt/hpc/webdata/server/' + os.getenv('host') + '/',
             'INFER_WSI': 'infer_wsi.py',
             'MYOD1': 'myod1.py',
             'SURVIVABILITY': 'survivability.py',
+            'TP53': 'tp53_inference.py',
+            'SUBTYPE': 'subtype_inference.py',
             'COHORT_MYOD1': '/mnt/hpc/webdata/server/' + os.getenv('host') + '/data/rms_myod1_cohort.csv',
             'COHORT_SURVIVABILITY': '/mnt/hpc/webdata/server/' + os.getenv('host') + '/data/rms_survivability_cohort.csv'
         }
@@ -121,8 +125,8 @@ class MiqaMixin(ConfigMixin):
             }
         }
 class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
-    # HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default='http://localhost:8081/')
-    HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default=os.getenv('client_host')+'/rms2/')
+    HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default='http://localhost:8081/')
+    # HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default=os.getenv('client_host')+'/rms2/')
     DevelopmentBaseConfiguration.SOCIALACCOUNT_PROVIDERS = {
         "openid_connect": {
             "SERVERS": [
@@ -145,11 +149,13 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     ACCOUNT_EMAIL_REQUIRED = True 
     ACCOUNT_UNIQUE_EMAIL = True 
     ACCOUNT_USERNAME_REQUIRED = True 
+    ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
 
     SOCIALACCOUNT_LOGIN_ON_GET = True
     SOCIALACCOUNT_EMAIL_REQUIRED = False
+    SOCIALACCOUNT_AUTO_SIGNUP = True
 
-    SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
+    SOCIALACCOUNT_EMAIL_VERIFICATION = None
 
     MIQA_URL_PREFIX = values.Value(environ=True, default='/')
     WHITENOISE_STATIC_PREFIX = '/static/'
@@ -165,12 +171,13 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     CSRF_COOKIE_SAMESITE = None
     SESSION_COOKIE_SAMESITE = None
 
+    # True for remote minio
     MINIO_STORAGE_USE_HTTPS = False
     USE_X_FORWARDED_HOST = True
     @property
     def LOGIN_URL(self):
         """LOGIN_URL also needs to be behind MIQA_URL_PREFIX."""
-        # return 'http://localhost:8000/accounts/itrust/login/'
+        return 'http://localhost:8000/accounts/itrust/login/'
         # return 'https://' + os.getenv('host') + '.ncifcrf.gov/rms2/accounts/itrust/login/'
         # return 'https://' + os.getenv('host') + '.ncifcrf.gov/miqa/login.html'
         return os.getenv('client_host') +'/rms2/login.html'
@@ -195,6 +202,8 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
         configuration.TEMPLATES[0]['DIRS'] += [
             configuration.BASE_DIR / 'staticfiles',
         ]
+
+
 class TestingConfiguration(MiqaMixin, TestingBaseConfiguration):
     # We would like to test that the celery tasks work correctly when triggered from the API
     CELERY_TASK_ALWAYS_EAGER = True

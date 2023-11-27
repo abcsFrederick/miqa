@@ -220,6 +220,20 @@ const djangoClient = {
     });
     return response?.data;
   },
+  async runSubtype(experiments: string[]): Promise<ResponseData> {
+    if (!experiments) return undefined;
+    const response = await apiClient.post(`/analysis/subtype_all`, {
+      params: { experiments: experiments },
+    });
+    return response?.data;
+  },
+  async runTP53(experiments: string[]): Promise<ResponseData> {
+    if (!experiments) return undefined;
+    const response = await apiClient.post(`/analysis/tp53_all`, {
+      params: { experiments: experiments },
+    });
+    return response?.data;
+  },
   async scans(experimentId: string): Promise<Scan[]> {
     if (!experimentId) return undefined;
     const response = await apiClient.get('/scans', {

@@ -7,6 +7,8 @@ ANALYSIS_TYPES = [
     ('SEGMENT', 'SEGMENT'),
     ('MYOD1', 'MYOD1'),
     ('SURVIVABILITY', 'SURVIVABILITY'),
+    ('TP53', 'TP53'),
+    ('SUBTYPE', 'SUBTYPE'),
 ]
 
 # status:

@@ -340,7 +340,7 @@ def hpc_configure(job_name, env_name, modules, *args, **kwargs):
 #SBATCH --job-name={name}
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --gres=gpu:1
+#SBATCH --gres={gres}
 #SBATCH --output={shared_partition_log}/slurm-%x.%j.out
 #SBATCH --error={shared_partition_log}/slurm-%x.%j.err
 
@@ -366,6 +366,8 @@ mkdir -p {shared_partition_tmp_directory}/slurm-$SLURM_JOB_NAME.$SLURM_JOB_ID
 
     exec_command = """python3.6 {pythonScriptPath} --directory {shared_partition_tmp_directory}/slurm-$SLURM_JOB_NAME.$SLURM_JOB_ID """  # noqa: E501
 
+
+    gres = kwargs.pop('gres', 'gpu:1')
     for name in kwargs.keys():
         arg = '--' + str(name) + ' ' + str(kwargs[name]) + ' '
         exec_command += arg
@@ -382,6 +384,7 @@ mkdir -p {shared_partition_tmp_directory}/slurm-$SLURM_JOB_NAME.$SLURM_JOB_ID
         os.mkdir(shared_partition_tmp_directory)
 
     script = batchscript.format(name=job_name,
+                                gres=gres,
                                 shared_partition_log=shared_partition_log,
                                 shared_partition_tmp_directory=shared_partition_tmp_directory,
                                 modules=' '.join(modules),
@@ -429,6 +432,29 @@ def survivability_evaluate(wsi_root, seg_root,
                              input=wsi_root, segmentation=seg_root,
                              survivability_prefix=survivability_prefix, seg_prefix=seg_prefix,
                              fastmode=fastmode)
+
+    return slurm_id
+
+
+def subtype_evaluate(wsi_root,
+                     subtype_prefix, seg_prefix,
+                     job_name, *args, **kwargs):
+    print('Subtype classification job_name: ', job_name)
+    slurm_id = hpc_configure(job_name, 'rms_env', kwargs['modules'],
+                             input=wsi_root,
+                             subtype_prefix=subtype_prefix, seg_prefix=seg_prefix)
+
+    return slurm_id
+
+
+def tp53_evaluate(wsi_root, seg_root,
+                  tp53_prefix, seg_prefix,
+                  job_name, *args, **kwargs):
+    print('TP53 job_name: ', job_name)
+    slurm_id = hpc_configure(job_name, 'rms_env', kwargs['modules'],
+                             input=wsi_root, segmentation=seg_root,
+                             tp53_prefix=tp53_prefix, seg_prefix=seg_prefix, 
+                             gres="gpu:v100:1")
 
     return slurm_id
 

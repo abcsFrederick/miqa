@@ -700,3 +700,117 @@ def survivability(wsi_seg_ids, *args, **kwargs):
         print('survivability_evaluate json path: ', json_path)
         analyses[index].analysis_result = json_path
         analyses[index].save()
+
+
+tp53_prefix = 'tp53_'
+
+@shared_task
+@utils.with_tmpdir
+def tp53(wsi_seg_ids, *args, **kwargs):
+    from miqa.learning.nn_inference import tp53_evaluate
+
+    # fetching or relocating input into a single NFS folder
+    analyses = []
+    for wsi_seg in wsi_seg_ids:
+        wsi_frame = Frame.objects.get(id=wsi_seg[0])
+        seg_frame = Frame.objects.get(id=wsi_seg[1])
+        scan_object = Scan.objects.get(id=wsi_frame.scan_id)
+
+        analysis = Analysis(
+            scan=scan_object,
+            status=1,
+            analysis_type='TP53'
+        )
+        analysis.save()
+        wsi_root, _ = get_path(wsi_frame, **kwargs, sub='wsi')
+        seg_root, _ = get_path(seg_frame, **kwargs, sub='seg')
+        # dest = Path(loc_, prefix + Path(wsi).stem + '.png')
+
+        analysis.input = wsi_seg[0]
+        analysis.status = 2
+        analysis.save()
+        analyses.append(analysis)
+
+    # tmp_input_dir = kwargs['_tempdir']
+    # settings.GLOBAL_SETTINGS['INFER_WSI']
+    job_name = 'TP53'
+    slurm_id = tp53_evaluate(wsi_root, seg_root, tp53_prefix, seg_prefix,
+                             job_name, modules=['torch/1.7.0'])
+    # import dest to a scan under same experiment or frame under same scan?
+    # Do we upload file to bucket or just save in NFS as is
+    print('Batch tp53_evaluate analysis submit, slurm id: ', str(slurm_id))
+    for index, wsi_seg_id in enumerate(wsi_seg_ids):
+        wsi_frame = Frame.objects.get(id=wsi_seg_id[0])
+        seg_frame = Frame.objects.get(id=wsi_seg_id[1])
+        scan_object = Scan.objects.get(id=wsi_frame.scan_id)
+        basename = ''
+        if wsi_frame.storage_mode == StorageMode.LOCAL_PATH:
+            basename = Path(wsi_frame.raw_path).stem
+        else:
+            basename = Path(wsi_frame.content.name).stem
+
+        json_name = tp53_prefix + basename + '.json'
+
+        json_path = Path(kwargs['_tmp'], 'slurm-{}.{}'.format(job_name, str(slurm_id)), json_name)
+
+        analyses[index].slurm_id = str(slurm_id)
+        print('tp53_evaluate json path: ', json_path)
+        analyses[index].analysis_result = json_path
+        analyses[index].save()
+
+
+subtype_prefix = 'subtype_'
+
+@shared_task
+@utils.with_tmpdir
+def subtype(wsi_seg_ids, *args, **kwargs):
+    from miqa.learning.nn_inference import subtype_evaluate
+
+    # fetching or relocating input into a single NFS folder
+    analyses = []
+    for wsi_seg in wsi_seg_ids:
+        wsi_frame = Frame.objects.get(id=wsi_seg[0])
+        seg_frame = Frame.objects.get(id=wsi_seg[1])
+        scan_object = Scan.objects.get(id=wsi_frame.scan_id)
+
+        analysis = Analysis(
+            scan=scan_object,
+            status=1,
+            analysis_type='SUBTYPE'
+        )
+        analysis.save()
+        wsi_root, _ = get_path(wsi_frame, **kwargs, sub='wsi')
+        # dest = Path(loc_, prefix + Path(wsi).stem + '.png')
+
+        analysis.input = wsi_seg[0]
+        analysis.status = 2
+        analysis.save()
+        analyses.append(analysis)
+
+    # tmp_input_dir = kwargs['_tempdir']
+    # settings.GLOBAL_SETTINGS['INFER_WSI']
+    job_name = 'SUBTYPE'
+    slurm_id = subtype_evaluate(wsi_root, subtype_prefix, seg_prefix,
+                                job_name, modules=['torch/1.7.0'])
+    # import dest to a scan under same experiment or frame under same scan?
+    # Do we upload file to bucket or just save in NFS as is
+    print('Batch subtype_evaluate analysis submit, slurm id: ', str(slurm_id))
+    for index, wsi_seg_id in enumerate(wsi_seg_ids):
+        wsi_frame = Frame.objects.get(id=wsi_seg_id[0])
+        seg_frame = Frame.objects.get(id=wsi_seg_id[1])
+        scan_object = Scan.objects.get(id=wsi_frame.scan_id)
+        basename = ''
+        if wsi_frame.storage_mode == StorageMode.LOCAL_PATH:
+            basename = Path(wsi_frame.raw_path).stem
+        else:
+            basename = Path(wsi_frame.content.name).stem
+
+        json_name = subtype_prefix + basename + '.json'
+
+        json_path = Path(kwargs['_tmp'], 'slurm-{}.{}'.format(job_name, str(slurm_id)), json_name)
+
+        analyses[index].slurm_id = str(slurm_id)
+        print('subtype_evaluate json path: ', json_path)
+        analyses[index].analysis_result = json_path
+        analyses[index].save()
+

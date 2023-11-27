@@ -16,7 +16,7 @@ from miqa.core.models import Analysis, Experiment, Frame, Project, Scan
 from miqa.core.rest.frame import FrameSerializer
 from miqa.core.rest.permissions import project_permission_required
 
-from ..tasks import myod1, segment_wsi, survivability
+from ..tasks import myod1, segment_wsi, survivability, tp53, subtype
 
 
 class AnalysisSerializer(serializers.ModelSerializer):
@@ -268,6 +268,97 @@ class AnalysisViewSet(ReadOnlyModelViewSet, mixins.CreateModelMixin, mixins.Dest
     def survivability(self, request, pk=None):
         print(pk)
         print('survivability')
+
+
+    @swagger_auto_schema(
+        request_body=AnalysisCreateSerializer(),
+        responses={201: AnalysisSerializer},
+    )
+    @action(detail=False, methods=['POST'], permission_classes=[IsAuthenticated])
+    def subtype_all(self, request, *args, **kwargs):
+        # preparing data
+        org_seg_ids = []
+        for exp in request.data['params']['experiments']:
+            experiment = Experiment.objects.get(id=exp)
+            scans = Scan.objects.filter(experiment=experiment)
+            for scan_obj in scans:
+                scan_analysis_serializer = ScanAnalysisSerializer(scan_obj).data
+                analyses = scan_analysis_serializer['analysis']
+                # segment_exit = any(analysis['analysis_type'] == 'SEGMENT'
+                # for analysis in analyses)
+                analysis_exist = is_analysis_exist(scan_obj, 'SUBTYPE')
+                for analysis in analyses:
+                    if analysis['analysis_type'] == 'SEGMENT' and not analysis_exist:
+                        org_id = analysis['input']
+                        seg_id = analysis['output']
+                        org_seg_ids.append((org_id, seg_id))
+        # create slurm task
+        if len(org_seg_ids):
+            subtype.delay(org_seg_ids)
+            return Response(
+                data='Successfully submit SUBTYPE classification analysis.',
+                status=status.HTTP_201_CREATED,
+            )
+        else:
+            return Response(
+                data='Already has SUBTYPE classification results or no SEGMENT exist.',
+                status=status.HTTP_201_CREATED,
+            )
+
+    @swagger_auto_schema(
+        request_body=no_body
+    )
+    @project_permission_required(review_access=True, experiments__pk='pk')
+    @action(detail=True, methods=['POST'], permission_classes=[IsAuthenticated])
+    def subtype(self, request, pk=None):
+        print(pk)
+        print('subtype')
+
+
+    @swagger_auto_schema(
+        request_body=AnalysisCreateSerializer(),
+        responses={201: AnalysisSerializer},
+    )
+    @action(detail=False, methods=['POST'], permission_classes=[IsAuthenticated])
+    def tp53_all(self, request, *args, **kwargs):
+        # preparing data
+        org_seg_ids = []
+        for exp in request.data['params']['experiments']:
+            experiment = Experiment.objects.get(id=exp)
+            scans = Scan.objects.filter(experiment=experiment)
+            for scan_obj in scans:
+                scan_analysis_serializer = ScanAnalysisSerializer(scan_obj).data
+                analyses = scan_analysis_serializer['analysis']
+                # segment_exit = any(analysis['analysis_type'] == 'SEGMENT'
+                # for analysis in analyses)
+                analysis_exist = is_analysis_exist(scan_obj, 'TP53')
+                for analysis in analyses:
+                    if analysis['analysis_type'] == 'SEGMENT' and not analysis_exist:
+                        org_id = analysis['input']
+                        seg_id = analysis['output']
+                        org_seg_ids.append((org_id, seg_id))
+        # create slurm task
+        if len(org_seg_ids):
+            tp53.delay(org_seg_ids)
+            return Response(
+                data='Successfully submit TP53 analysis.',
+                status=status.HTTP_201_CREATED,
+            )
+        else:
+            return Response(
+                data='Already has TP53 results or no SEGMENT exist.',
+                status=status.HTTP_201_CREATED,
+            )
+
+    @swagger_auto_schema(
+        request_body=no_body
+    )
+    @project_permission_required(review_access=True, experiments__pk='pk')
+    @action(detail=True, methods=['POST'], permission_classes=[IsAuthenticated])
+    def tp53(self, request, pk=None):
+        print(pk)
+        print('tp53')
+
 
     @swagger_auto_schema(
     )

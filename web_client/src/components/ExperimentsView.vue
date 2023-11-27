@@ -35,7 +35,9 @@ export default {
       { text: 'Scan', value: 'name', align: 'left' },
       { text: 'Segmentation', value: 'seg_highest', align: 'left' },
       { text: 'MyoD1', value: 'myod1_score', align: 'left' },
-      { text: 'Survivability', value: 'surv_score', align: 'left' }
+      { text: 'Survivability', value: 'surv_score', align: 'left' },
+      { text: 'Subtype', value: 'subtype_score', align: 'left' },
+      { text: 'Tp53', value: 'tp53_score', align: 'left' }
     ]
   }),
   computed: {
@@ -81,9 +83,12 @@ export default {
           let seg_highest = '';
           let myod1_score = '';
           let surv_score = '';
+          let subtype_score = '';
+          let tp53_score = '';
           let status = ''
           let result_obj;
           scan.analysis.forEach(an => {
+            // console.log(an)
             switch (an.analysis_type) {
               case 'SEGMENT':
                 if (an.status === 3) {
@@ -116,6 +121,26 @@ export default {
                   surv_score = 'Fail';
                 }
                 break;
+              case 'SUBTYPE':
+                if (an.status === 3) {
+                  result_obj = JSON.parse(an.analysis_result);
+                  subtype_score = result_obj['Subtype'];
+                } else if (an.status === 2) {
+                  subtype_score = 'Running';
+                } else if (an.status === 4) {
+                  subtype_score = 'Fail';
+                }
+                break;
+              case 'TP53':
+                if (an.status === 3) {
+                  result_obj = JSON.parse(an.analysis_result);
+                  tp53_score = result_obj['tp53 score'].toFixed(3);
+                } else if (an.status === 2) {
+                  tp53_score = 'Running';
+                } else if (an.status === 4) {
+                  tp53_score = 'Fail';
+                }
+                break;
             }
             // if (an.status === 3 && an.analysis_type === 'SEGMENT') {
             //   let result_obj = JSON.parse(an.analysis_result);
@@ -133,6 +158,8 @@ export default {
             seg_highest,
             myod1_score,
             surv_score,
+            subtype_score,
+            tp53_score,
             ...scan,
             ...this.decisionToRating(scan.decisions),
           });
@@ -291,6 +318,14 @@ export default {
     survivability_analysis() {
       let experiments = this.experimentsForAnalysis();
       djangoRest.runSurvivability(experiments);
+    },
+    subtype_analysis() {
+      let experiments = this.experimentsForAnalysis();
+      djangoRest.runSubtype(experiments);
+    },
+    tp53_analysis() {
+      let experiments = this.experimentsForAnalysis();
+      djangoRest.runTP53(experiments);
     },
     experimentsForAnalysis() {
       var filtered = Object.keys(this.selectedExperiments).filter(function(key) {
@@ -480,7 +515,7 @@ export default {
               </v-dialog>
             </template>
             <template v-slot:group.header="{items, isOpen, toggle}">
-              <th colspan="5">
+              <th colspan="7">
                 <v-checkbox
                   :model-value=items[0].experiment
                   v-model=selectedExperiments[items[0].experiment]
@@ -581,6 +616,26 @@ export default {
                 </td>
                 <td v-else>
                   {{item.surv_score}}
+                </td>
+
+                <td v-if="item.subtype_score === 'Running' ">
+                  <v-icon color="orange">mdi-loading mdi-spin</v-icon>
+                </td>
+                <td v-else-if="item.subtype_score === 'Fail' ">
+                  <v-icon color="red">mdi-close-thick</v-icon>
+                </td>
+                <td v-else>
+                  {{item.subtype_score}}
+                </td>
+
+                <td v-if="item.tp53_score === 'Running' ">
+                  <v-icon color="orange">mdi-loading mdi-spin</v-icon>
+                </td>
+                <td v-else-if="item.tp53_score === 'Fail' ">
+                  <v-icon color="red">mdi-close-thick</v-icon>
+                </td>
+                <td v-else>
+                  {{item.tp53_score}}
                 </td>
               </tr>
             </template>
@@ -890,7 +945,27 @@ export default {
               <v-icon>mdi-numeric-2-box</v-icon>
               Survivability
           </v-btn>
-      </v-row>
+        </v-row>
+        <v-row class="analysis">
+          <v-btn
+            class="blue white--text"
+            style="margin-bottom: 4px"
+            @click="subtype_analysis"
+          >
+              <v-icon>mdi-numeric-2-box</v-icon>
+              SUBTYPE
+          </v-btn>
+        </v-row>
+        <v-row class="analysis">
+          <v-btn
+            class="blue white--text"
+            style="margin-bottom: 4px"
+            @click="tp53_analysis"
+          >
+              <v-icon>mdi-numeric-2-box</v-icon>
+              TP53
+          </v-btn>
+        </v-row>
       </v-card>
     </div>
   </v-card>
