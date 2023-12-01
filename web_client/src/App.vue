@@ -16,5 +16,6 @@ export default {
 <style lang="scss">
 html {
   overflow-y: auto !important;
+  font-size: 22px !important;
 }
 </style>

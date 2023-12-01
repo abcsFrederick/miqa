@@ -280,7 +280,7 @@ export default defineComponent({
     <Navbar />
     <div class="d-flex">
       <v-card class="project-list-container">
-        <v-navigation-drawer permanent>
+        <v-navigation-drawer permanent style="width: 300px">
           <v-card-title style="display: flex; justify-content: space-between">
             Projects
             <v-icon @click="refreshAllTaskOverviews">
@@ -341,6 +341,7 @@ export default defineComponent({
               <v-btn
                 v-else
                 class="green white--text"
+                style="padding: 0 10px"
                 @click="creating = true"
               >
                 + Create new Project

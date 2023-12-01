@@ -29,5 +29,9 @@ unset _dotenv_dir
 unset _dotenv_file
 
 export TMPDIR=/mnt/docker/tmp/
-export client_id=0b4a535a-9f88-4717-b4af-6b1b0cb48933
-export client_secret=e246a609-243c-45f4-9f52-f75d9b2e85d9
+export client_id=7ceb1042-1145-422a-82c2-4eaa67506721
+export client_secret=2199bc68-778f-4672-a2f2-44dc6e8ea037
+# prod
+export server_url=https://sts.nih.gov
+export host=fsivgl-rms01p
+export client_host=https://fsabcl-onc01p.ncifcrf.gov

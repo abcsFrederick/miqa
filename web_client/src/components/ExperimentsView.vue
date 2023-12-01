@@ -385,7 +385,7 @@ export default {
             :items-per-page=5
             @current-items="currentItems"
           >
-            <template v-slot:top>
+            <!--<template v-slot:top>
               <v-dialog
                 v-if="!minimal && MIQAConfig.S3_SUPPORT"
                 v-model="showUploadModal"
@@ -513,7 +513,7 @@ export default {
                   </v-card-actions>
                 </v-card>
               </v-dialog>
-            </template>
+            </template>-->
             <template v-slot:group.header="{items, isOpen, toggle}">
               <th colspan="7">
                 <v-checkbox
@@ -788,145 +788,153 @@ export default {
       >
         <span class="px-5">No imported data.</span>
       </div>
-      <!--<v-dialog
-        v-if="!minimal && MIQAConfig.S3_SUPPORT"
-        v-model="showUploadModal"
-        width="600px"
-      >
-        <template #activator="{ on, attrs }">
-          <div
-            v-bind="attrs"
-            class="add-scans"
-            v-on="on"
-          >
-            <v-btn
-              class="green white--text"
-              @click="() => {experimentNameForUpload = ''}"
-            >
-              + Add Scans...
-            </v-btn>
-          </div>
-        </template>
-        <v-card>
-          <v-btn
-            icon
-            style="float:right"
-            @click="showUploadModal=false"
-          >
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-          <v-card-title class="text-h6">
-            Upload Image Files to Experiment
-          </v-card-title>
-          <div
-            class="d-flex px-6"
-            style="align-items: baseline; justify-content: space-between;"
-          >
-            <div
-              class="d-flex mode-toggle"
-            >
-              <span>Upload to New</span>
-              <v-switch
-                :value="uploadToExisting"
-                :disabled="!(orderedExperiments && orderedExperiments.length)"
-                inset
-                dense
-                style="display: inline-block; max-height: 40px; max-width: 60px;"
-                class="px-3 ma-0"
-                @change="(value) => {uploadToExisting = value; experimentNameForUpload = ''}"
-              />
-              <span
-                :class="!(orderedExperiments && orderedExperiments.length) ? 'grey--text' : ''"
-              >
-                Upload to Existing
-              </span>
-            </div>
-            <div style="max-width:200px">
-              <v-select
-                v-if="orderedExperiments && orderedExperiments.length && uploadToExisting"
-                v-model="experimentNameForUpload"
-                :items="orderedExperiments"
-                item-text="name"
-                label="Select Experiment"
-                dense
-              />
-              <v-text-field
-                v-else
-                v-model="experimentNameForUpload"
-                label="Name new Experiment"
-              />
-            </div>
-          </div>
-          <div class="ma-5">
-            <v-file-input
-              v-model="fileSetForUpload"
-              label="Image files (.nii.gz, .nii, .mgz, .nrrd, .svs, .tif, .png)"
-              prepend-icon="mdi-paperclip"
-              multiple
-              chips
-              @click:clear="delayPrepareDropZone"
-            >
-              <template #selection="{ index, text }">
-                <v-chip
-                  v-if="index < 2"
-                  small
-                >
-                  {{ text }}
-                </v-chip>
-
-                <span
-                  v-else-if="index === 2"
-                  class="text-overline grey--text text--darken-3 mx-2"
-                >
-                  +{{ fileSetForUpload.length - 2 }}
-                  file{{ fileSetForUpload.length - 2 > 1 ? 's' :'' }}
-                </span>
-              </template>
-            </v-file-input>
-            <div
-              v-if="fileSetForUpload.length == 0"
-              id="dropZone"
-              style="text-align: center"
-              class="pa-3 drop-zone"
-              @drop.prevent="addDropFiles"
-              @dragover.prevent
-            >
-              or drag and drop here
-            </div>
-          </div>
-          <v-divider />
-          <v-card-actions>
-            <div
-              v-if="uploadError"
-              style="color: red;"
-            >
-              {{ uploadError }}
-            </div>
-            <v-spacer />
-            <v-btn
-              :loading="uploading"
-              :disabled="fileSetForUpload.length < 1 || !experimentNameForUpload"
-              color="primary"
-              text
-              @click="uploadToExperiment()"
-            >
-              Upload
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>-->
       <v-card style="box-shadow:none; width: 20%" class="pl-2 pr-3">
-        <v-row class="analysis">
+        <v-dialog
+          v-if="!minimal && MIQAConfig.S3_SUPPORT"
+          v-model="showUploadModal"
+          width="600px"
+        >
+          <template #activator="{ on, attrs }">
+            <div
+              v-bind="attrs"
+              class="add-scans"
+              v-on="on"
+            >
+              <v-btn
+                class="green white--text"
+                style="margin-bottom: 4px"
+                @click="() => {experimentNameForUpload = ''}"
+              >
+                + Add Scans...
+              </v-btn>
+            </div>
+          </template>
+          <v-card>
+            <v-btn
+              icon
+              style="float:right"
+              @click="showUploadModal=false"
+            >
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+            <v-card-title class="text-h6">
+              Upload Image Files to Experiment
+            </v-card-title>
+            <div
+              class="d-flex px-6"
+              style="align-items: baseline; justify-content: space-between;"
+            >
+              <div
+                class="d-flex mode-toggle"
+              >
+                <span>Upload to New</span>
+                <v-switch
+                  :value="uploadToExisting"
+                  :disabled="!(orderedExperiments && orderedExperiments.length)"
+                  inset
+                  dense
+                  style="display: inline-block; max-height: 40px; max-width: 60px;"
+                  class="px-3 ma-0"
+                  @change="(value) => {uploadToExisting = value; experimentNameForUpload = ''}"
+                />
+                <span
+                  :class="!(orderedExperiments && orderedExperiments.length) ? 'grey--text' : ''"
+                >
+                  Upload to Existing
+                </span>
+              </div>
+              <div style="max-width:200px">
+                <v-select
+                  v-if="orderedExperiments && orderedExperiments.length && uploadToExisting"
+                  v-model="experimentNameForUpload"
+                  :items="orderedExperiments"
+                  item-text="name"
+                  label="Select Experiment"
+                  dense
+                />
+                <v-text-field
+                  v-else
+                  v-model="experimentNameForUpload"
+                  label="Name new Experiment"
+                />
+              </div>
+            </div>
+            <div class="ma-5">
+              <v-file-input
+                v-model="fileSetForUpload"
+                label="Image files (.nii.gz, .nii, .mgz, .nrrd, .svs, .tif, .png)"
+                prepend-icon="mdi-paperclip"
+                multiple
+                chips
+                @click:clear="delayPrepareDropZone"
+              >
+                <template #selection="{ index, text }">
+                  <v-chip
+                    v-if="index < 2"
+                    small
+                  >
+                    {{ text }}
+                  </v-chip>
+
+                  <span
+                    v-else-if="index === 2"
+                    class="text-overline grey--text text--darken-3 mx-2"
+                  >
+                    +{{ fileSetForUpload.length - 2 }}
+                    file{{ fileSetForUpload.length - 2 > 1 ? 's' :'' }}
+                  </span>
+                </template>
+              </v-file-input>
+              <div
+                v-if="fileSetForUpload.length == 0"
+                id="dropZone"
+                style="text-align: center"
+                class="pa-3 drop-zone"
+                @drop.prevent="addDropFiles"
+                @dragover.prevent
+              >
+                or drag and drop here
+              </div>
+            </div>
+            <v-divider />
+            <v-card-actions>
+              <div
+                v-if="uploadError"
+                style="color: red;"
+              >
+                {{ uploadError }}
+              </div>
+              <v-spacer />
+              <v-btn
+                :loading="uploading"
+                :disabled="fileSetForUpload.length < 1 || !experimentNameForUpload"
+                color="primary"
+                text
+                @click="uploadToExperiment()"
+              >
+                Upload
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+        <v-row 
+          v-if="currentProject.experiments.length"
+          style="overflow: hidden;"
+          class="analysis"
+        >
           <v-btn
             class="blue white--text"
-            style="margin-bottom: 4px"
+            style="margin-bottom: 4px;"
             @click="seg_analysis"
           >
               <v-icon>mdi-numeric-1-box</v-icon>
               Segmentation
           </v-btn>
         </v-row>
-        <v-row class="analysis">
+        <v-row 
+          v-if="currentProject.experiments.length"
+          class="analysis"
+        >
           <v-btn
             class="blue white--text"
             style="margin-bottom: 4px"
@@ -936,17 +944,24 @@ export default {
               MyoD1
           </v-btn>
         </v-row>
-        <v-row class="analysis">
+        <v-row 
+          v-if="currentProject.experiments.length"
+          style="overflow: hidden;"
+          class="analysis"
+        >
           <v-btn
             class="blue white--text"
-            style="margin-bottom: 4px"
+            style="margin-bottom: 4px;"
             @click="survivability_analysis"
           >
               <v-icon>mdi-numeric-2-box</v-icon>
               Survivability
           </v-btn>
         </v-row>
-        <v-row class="analysis">
+        <v-row 
+          v-if="currentProject.experiments.length"
+          class="analysis"
+        >
           <v-btn
             class="blue white--text"
             style="margin-bottom: 4px"
@@ -956,7 +971,10 @@ export default {
               SUBTYPE
           </v-btn>
         </v-row>
-        <v-row class="analysis">
+        <v-row 
+          v-if="currentProject.experiments.length"
+          class="analysis"
+        >
           <v-btn
             class="blue white--text"
             style="margin-bottom: 4px"
@@ -1015,7 +1033,7 @@ ul.scans {
 }
 .add-scans {
   min-width: 150px;
-  text-align: right;
+  // text-align: right;
   padding-right: 15px;
 }
 .run-analysis {
