@@ -8,15 +8,17 @@ import 'vue-css-donut-chart/dist/vcdonut.css';
 import { mapMutations } from 'vuex';
 import store from '@/store';
 import djangoRest from '@/django';
-import { Project, ScanState, AnalysisState } from '@/types';
+import { Project, ScanState } from '@/types';
 import ExperimentsView from '@/components/ExperimentsView.vue';
 import Navbar from '@/components/Navbar.vue';
 import ProjectSettings from '@/components/ProjectSettings.vue';
 import ProjectUsers from '@/components/ProjectUsers.vue';
 import ImageView from '@/components/ImageView.vue';
 import AnalysisView from '@/components/AnalysisView.vue';
+import VueApexCharts from "vue-apexcharts";
 
-
+Vue.use(VueApexCharts);
+Vue.component('apexchart', VueApexCharts)
 Vue.use(Donut);
 
 export default defineComponent({
@@ -33,14 +35,20 @@ export default defineComponent({
   setup() {
     const { switchReviewMode } = store.commit;
     const loadingProjects = ref(true);
+    const loadingModules = ref(true);
     store.dispatch.loadProjects().then(() => {
       loadingProjects.value = false;
+    });
+    store.dispatch.loadModules().then(() => {
+      loadingModules.value = false;
     });
     const reviewMode = computed(() => store.state.reviewMode);
     const complete = window.location.hash.includes('complete');
     const currentProject = computed(() => store.state.currentProject);
     const currentTaskOverview = computed(() => store.state.currentTaskOverview);
     const projects = computed(() => store.state.projects);
+    const modules = computed(() => store.state.modules);
+
     const isGlobal = computed(() => store.getters.isGlobal);
 
     const selectedScan = computed(() => store.state.selectedScan);
@@ -58,13 +66,111 @@ export default defineComponent({
     };
 
     // const overviewSections = ref([]);
-    const segSections = ref([]);
-    const myod1Sections = ref([]);
-    const survSections = ref([]);
+    // const segSections = ref([]);
+    // const myod1Sections = ref([]);
+    // const survSections = ref([]);
+    const overview_options = ref({
+      chart: {
+        height: 400,
+        width: 400,
+        type: 'radialBar',
+      },
+      plotOptions: {
+        radialBar: {
+          startAngle: 90,
+          hollow: {
+            margin: 0,
+            size: "50%",
+            background: "#293450"
+          },
+          track: {
+            endAngle: 1,
+            margin: 1,
+            opacity: 0.2,
+            background: []
+          },
+          dataLabels: {
+            name: {
+              offsetY: -20,
+              color: "#fff",
+              fontSize: "13px"
+            },
+            value: {
+              color: "#fff",
+              fontSize: "30px",
+              show: true,
+              formatter: function(val) {
+                return (val * currentTaskOverview.value.total_scans / 100).toFixed(0);
+              }
+            },
+            total: {
+              show: true,
+              label: 'Total Images',
+              color: "#fff",
+              formatter: function (w) {
+                return currentTaskOverview.value.total_scans;
+              }
+            }
+          },
+        }
+      },
+      legend: {
+          show: true,
+          floating: true,
+          fontSize: '16px',
+          position: 'right',
+          offsetX: -30,
+          offsetY: 0,
+          labels: {
+            useSeriesColors: true,
+          },
+          markers: {
+            size: 0,
+            width: 20,
+          },
+          formatter: function(seriesName, opts) {
+            return seriesName + ":  " + (opts.w.globals.series[opts.seriesIndex] * currentTaskOverview.value.total_scans / 100).toFixed(0);
+          },
+          itemMargin: {
+            vertical: 0
+          }
+        },
+      labels: [],
+      colors: []
+    });
+    const overview_series = ref([]);
     const scanStates = Object.keys(ScanState);
-    const analysisStates = Object.keys(AnalysisState);
+    // const analysisStates = Object.keys(AnalysisState);
     const setOverviewSections = () => {
-      if (projects.value && currentTaskOverview.value) {
+      if (projects.value && currentTaskOverview.value && modules.value ) {
+        overview_options.value.labels = [];
+        overview_options.value.colors = [];
+        overview_options.value.plotOptions.radialBar.track.background = [];
+        overview_series.value = [];
+        const analysisCounts = ref(reactive(
+          Object.keys(modules.value).map(
+            (stateString) => {
+              let count = 0;
+              Object.entries(currentTaskOverview.value.scan_analysis).filter(([, scan_analysis]) => 
+                count = count + Object.entries(scan_analysis).filter(([, analysis]) =>
+                  analysis.analysis_type === stateString.replace(/_/g, ' ')).length)
+              return [stateString, count];
+            },
+          ),
+        ));
+        // overview_options.value.plotOptions.radialBar.dataLabels.total.formatter = function(){ return currentTaskOverview.value.total_scans; };
+
+        Object.keys(modules.value).forEach((module) => {
+          overview_options.value.labels.push(module);
+          overview_options.value.colors.push(modules.value[module].color);
+          overview_options.value.plotOptions.radialBar.track.background.push(modules.value[module].color);
+          analysisCounts.value.filter(
+          ([stateString, scanCount]: [string, number]) =>
+            stateString === module
+          ).map(([stateString, scanCount]: [string, number]) => {
+            overview_series.value.push(scanCount / currentTaskOverview.value.total_scans * 100);
+          })
+        });
         // const scanStateCounts = ref(reactive(
         //   scanStates.map(
         //     (stateString) => {
@@ -75,17 +181,6 @@ export default defineComponent({
         //     },
         //   ),
         // ));
-        const analysisCounts = ref(reactive(
-          analysisStates.map(
-            (stateString) => {
-              let count = 0;
-              Object.entries(currentTaskOverview.value.scan_analysis).filter(([, scan_analysis]) => 
-                count = count + Object.entries(scan_analysis).filter(([, analysis]) =>
-                  analysis.analysis_type === stateString.replace(/_/g, ' ')).length)
-              return [stateString, count];
-            },
-          ),
-        ));
         // overviewSections.value = scanStateCounts.value.map(
         //   ([stateString, scanCount]: [string, number]) => ({
         //     value: scanCount,
@@ -93,38 +188,38 @@ export default defineComponent({
         //     color: ScanState[stateString],
         //   }),
         // );
-        segSections.value = analysisCounts.value.filter(
-          ([stateString, scanCount]: [string, number]) =>
-            stateString === "SEGMENT"
-          ).map(([stateString, scanCount]: [string, number]) => ({
-            value: scanCount,
-            label: `${stateString.replace(/_/g, ' ')} (${scanCount})`,
-            color: AnalysisState[stateString],
-          })
-        );
-        myod1Sections.value = analysisCounts.value.filter(
-          ([stateString, scanCount]: [string, number]) => 
-            stateString === "MYOD1"
-          ).map(([stateString, scanCount]: [string, number]) => ({
-            value: scanCount,
-            label: `${stateString.replace(/_/g, ' ')} (${scanCount})`,
-            color: AnalysisState[stateString],
-          })
-        );
-        survSections.value = analysisCounts.value.filter(
-          ([stateString, scanCount]: [string, number]) => 
-            stateString === "SURVIVABILITY"
-          ).map(([stateString, scanCount]: [string, number]) => ({
-            value: scanCount,
-            label: `${stateString.replace(/_/g, ' ')} (${scanCount})`,
-            color: AnalysisState[stateString],
-          })
-        );
+        // segSections.value = analysisCounts.value.filter(
+        //   ([stateString, scanCount]: [string, number]) =>
+        //     stateString === "SEGMENT"
+        //   ).map(([stateString, scanCount]: [string, number]) => ({
+        //     value: scanCount,
+        //     label: `${stateString.replace(/_/g, ' ')} (${scanCount})`,
+        //     color: AnalysisState[stateString],
+        //   })
+        // );
+        // myod1Sections.value = analysisCounts.value.filter(
+        //   ([stateString, scanCount]: [string, number]) => 
+        //     stateString === "MYOD1"
+        //   ).map(([stateString, scanCount]: [string, number]) => ({
+        //     value: scanCount,
+        //     label: `${stateString.replace(/_/g, ' ')} (${scanCount})`,
+        //     color: AnalysisState[stateString],
+        //   })
+        // );
+        // survSections.value = analysisCounts.value.filter(
+        //   ([stateString, scanCount]: [string, number]) => 
+        //     stateString === "SURVIVABILITY"
+        //   ).map(([stateString, scanCount]: [string, number]) => ({
+        //     value: scanCount,
+        //     label: `${stateString.replace(/_/g, ' ')} (${scanCount})`,
+        //     color: AnalysisState[stateString],
+        //   })
+        // );
       } else {
         // overviewSections.value = [];
-        segSections.value = [];
-        myod1Sections.value = [];
-        survSections.value = [];
+        // segSections.value = [];
+        // myod1Sections.value = [];
+        // survSections.value = [];
       }
     };
 
@@ -174,10 +269,13 @@ export default defineComponent({
       isGlobal,
       overviewPoll,
       selectGlobal,
+      overview_options,
+      overview_series,
+      modules,
       // overviewSections,
-      segSections,
-      myod1Sections,
-      survSections,
+      // segSections,
+      // myod1Sections,
+      // survSections,
       setOverviewSections,
       refreshAllTaskOverviews,
       getProjectFromURL,
@@ -394,7 +492,8 @@ export default defineComponent({
             class="flex-card"
           >
             <v-subheader>Overview</v-subheader>
-            <vc-donut
+            <apexchart :options="overview_options" :series="overview_series"></apexchart>
+            <!--<vc-donut
               :sections="segSections"
               :size="200"
               :thickness="30"
@@ -431,7 +530,7 @@ export default defineComponent({
                   ({{ currentTaskOverview.total_experiments }} experiments)</p>
                 </vc-donut>
               </v-row>
-            </v-container>
+            </v-container>-->
           </v-card>
         </div>
         <div

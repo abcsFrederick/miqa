@@ -4,7 +4,7 @@ from django.db import models
 from django_extensions.db.models import TimeStampedModel
 
 ANALYSIS_TYPES = [
-    ('SEGMENT', 'SEGMENT'),
+    ('SEGMENTATION', 'SEGMENTATION'),
     ('MYOD1', 'MYOD1'),
     ('SURVIVABILITY', 'SURVIVABILITY'),
     ('TP53', 'TP53'),

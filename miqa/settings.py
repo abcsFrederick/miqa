@@ -72,8 +72,7 @@ class MiqaMixin(ConfigMixin):
         configuration.INSTALLED_APPS += [
             's3_file_field',
             'guardian',
-            'allauth.socialaccount.providers.openid_connect',
-            'miqa.providers.oauth2'
+            'allauth.socialaccount.providers.openid_connect'
         ]
 
         configuration.TEMPLATES[0]['DIRS'] += [
@@ -107,11 +106,38 @@ class MiqaMixin(ConfigMixin):
             # 'DATASET': '/var/opt/MIQA/miqa/samples/WSI/',
             'DATASET': '/mnt/hpc/webdata/server/fsivgl-rms01d/shared_data/WSI/',
             'SHARED_PARTITION': '/mnt/hpc/webdata/server/' + os.getenv('host') + '/',
-            'INFER_WSI': 'infer_wsi.py',
-            'MYOD1': 'myod1.py',
-            'SURVIVABILITY': 'survivability.py',
-            'TP53': 'tp53_inference.py',
-            'SUBTYPE': 'subtype_inference.py',
+            'MODULES': {
+                'SEGMENTATION': {
+                    'color': '#008ffb',
+                    'script': 'infer_wsi.py',
+                    'output_field': '', # name of score in script output file
+                    'score_name': 'seg_highest',
+                },
+                'MYOD1': {
+                    'color': '#00e396',
+                    'script': 'myod1.py',
+                    'output_field': 'Positive Score',
+                    'score_name': 'myod1_score'
+                },
+                'SURVIVABILITY': {
+                    'color': '#feb019',
+                    'script': 'survivability.py',
+                    'output_field': 'secondBest',
+                    'score_name': 'surv_score'
+                },
+                'TP53': {
+                    'color': '#ff4560',
+                    'script': 'tp53_inference.py',
+                    'output_field': 'tp53 score',
+                    'score_name': 'tp53_score'
+                },
+                'SUBTYPE': {
+                    'color': '#775dd0',
+                    'script': 'subtype_inference.py',
+                    'output_field': 'Subtype',
+                    'score_name': 'subtype_score'
+                }
+            },
             'COHORT_MYOD1': '/mnt/hpc/webdata/server/' + os.getenv('host') + '/data/rms_myod1_cohort.csv',
             'COHORT_SURVIVABILITY': '/mnt/hpc/webdata/server/' + os.getenv('host') + '/data/rms_survivability_cohort.csv'
         }

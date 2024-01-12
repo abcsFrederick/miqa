@@ -90,12 +90,6 @@ enum ScanState {
   complete = '#00C853',
 }
 
-enum AnalysisState {
-  SEGMENT = '#2196F3',
-  MYOD1 = '#f44336',
-  SURVIVABILITY = '#4CAF50',
-}
-
 interface ProjectTaskOverview {
   project_id: string,
   total_experiments: number,
@@ -132,5 +126,5 @@ interface Email {
 
 export {
   User, ResponseData, Project, ProjectTaskOverview, ProjectSettings,
-  Scan, ScanDecision, Frame, ScanState, Email, Experiment, AnalysisState
+  Scan, ScanDecision, Frame, ScanState, Email, Experiment
 };

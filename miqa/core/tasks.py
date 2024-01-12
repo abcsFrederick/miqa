@@ -547,7 +547,7 @@ def segment_wsi(frames, *args, **kwargs):
         analysis = Analysis(
             scan=scan_object,
             status=1,
-            analysis_type='SEGMENT'
+            analysis_type='SEGMENTATION'
         )
         analysis.save()
         root, _ = get_path(frame, **kwargs)
@@ -558,8 +558,8 @@ def segment_wsi(frames, *args, **kwargs):
         analysis.save()
         analyses.append(analysis)
     tmp_input_dir = root
-    # settings.GLOBAL_SETTINGS['INFER_WSI']
-    job_name = 'INFER_WSI'
+    # settings.GLOBAL_SETTINGS['SEGMENTATION']
+    job_name = 'SEGMENTATION'
     slurm_id = seg_evaluate(tmp_input_dir, seg_prefix, thumb_prefix,
                             job_name, modules=['torch/1.7.0'])
     # import dest to a scan under same experiment or frame under same scan?

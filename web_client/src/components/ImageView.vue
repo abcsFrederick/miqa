@@ -29,8 +29,8 @@ export default {
     },
     segTable () {
       let segAnalysis = this.scans[this.selectedScan].analysis;
-      if (segAnalysis.length !== 0 && segAnalysis.filter(a => a.analysis_type=='SEGMENT')[0].status == 3) {
-        let data = [JSON.parse(this.scans[this.selectedScan].analysis.filter(a => a.analysis_type=='SEGMENT')[0].analysis_result)];
+      if (segAnalysis.length !== 0 && segAnalysis.filter(a => a.analysis_type=='SEGMENTATION')[0].status == 3) {
+        let data = [JSON.parse(this.scans[this.selectedScan].analysis.filter(a => a.analysis_type=='SEGMENTATION')[0].analysis_result)];
         data.columns = ['ARMS','ERMS','necrosis','stroma'];
         // render by updating the this.table model
         let table = data;

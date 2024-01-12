@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 import subprocess
+import json
 
 from django.conf import settings
 from drf_yasg.utils import no_body, swagger_auto_schema
@@ -17,6 +18,7 @@ from miqa.core.rest.frame import FrameSerializer
 from miqa.core.rest.permissions import project_permission_required
 
 from ..tasks import myod1, segment_wsi, survivability, tp53, subtype
+from django.http import HttpResponse
 
 
 class AnalysisSerializer(serializers.ModelSerializer):
@@ -89,12 +91,12 @@ def is_valid_scan(scan_id):
 
 def is_analysis_exist(scan_obj, analysis_type):
     for exist_analysis in ScanAnalysisSerializer(scan_obj).data['analysis']:
-        if exist_analysis['analysis_type'] == analysis_type and exist_analysis['status'] == 3:
+        if exist_analysis['analysis_type'] == analysis_type and exist_analysis['status'] in [1,2,3]:
             return True
         if exist_analysis['status'] == 4:
             Analysis.objects.get(id=exist_analysis['id']).delete()
             # Only delete segmentation frame if failed analysis is segment
-            if exist_analysis['analysis_type'] == 'SEGMENT':
+            if exist_analysis['analysis_type'] == 'SEGMENTATION':
                 for frame in Frame.objects.filter(scan=exist_analysis['scan']):
                     if frame.frame_number == 1:
                         frame.delete()
@@ -152,10 +154,11 @@ class AnalysisViewSet(ReadOnlyModelViewSet, mixins.CreateModelMixin, mixins.Dest
             scans = Scan.objects.filter(experiment=experiment)
             for scan_obj in scans:
                 frames = ScanAnalysisSerializer(scan_obj).data['frames']
-                analysis_exist = is_analysis_exist(scan_obj, 'SEGMENT')
+                analysis_exist = is_analysis_exist(scan_obj, 'SEGMENTATION')
                 for frame in frames:
                     if frame['extension'] in ['.svs', '.tif'] and not analysis_exist:
                         frame_ids.append(frame['id'])
+
         # create slurm task
         if len(frame_ids):
             segment_wsi.delay(frame_ids)
@@ -166,7 +169,7 @@ class AnalysisViewSet(ReadOnlyModelViewSet, mixins.CreateModelMixin, mixins.Dest
         else:
             return Response(
                 data='Already has segmentation results or still running.',
-                status=status.HTTP_204_NO_CONTENT,
+                status=status.HTTP_409_CONFLICT,
             )
 
     @swagger_auto_schema(
@@ -196,12 +199,14 @@ class AnalysisViewSet(ReadOnlyModelViewSet, mixins.CreateModelMixin, mixins.Dest
                 # for analysis in analyses)
                 analysis_exist = is_analysis_exist(scan_obj, 'MYOD1')
                 for analysis in analyses:
-                    if analysis['analysis_type'] == 'SEGMENT' and not analysis_exist:
+                    if analysis['analysis_type'] == 'SEGMENTATION' and not analysis_exist:
                         org_id = analysis['input']
                         seg_id = analysis['output']
                         org_seg_ids.append((org_id, seg_id))
+
         # create slurm task
         if len(org_seg_ids):
+            print('run delay')
             myod1.delay(org_seg_ids)
             return Response(
                 data='Successfully submit MyoD1 analysis.',
@@ -209,8 +214,8 @@ class AnalysisViewSet(ReadOnlyModelViewSet, mixins.CreateModelMixin, mixins.Dest
             )
         else:
             return Response(
-                data='Already has MyoD1 results or no SEGMENT exist.',
-                status=status.HTTP_201_CREATED,
+                data='Already has MyoD1 results or no SEGMENTATION exist.',
+                status=status.HTTP_409_CONFLICT,
             )
 
     @swagger_auto_schema(
@@ -240,7 +245,7 @@ class AnalysisViewSet(ReadOnlyModelViewSet, mixins.CreateModelMixin, mixins.Dest
                 # for analysis in analyses)
                 analysis_exist = is_analysis_exist(scan_obj, 'SURVIVABILITY')
                 for analysis in analyses:
-                    if analysis['analysis_type'] == 'SEGMENT' and not analysis_exist:
+                    if analysis['analysis_type'] == 'SEGMENTATION' and not analysis_exist:
                         org_id = analysis['input']
                         seg_id = analysis['output']
                         org_seg_ids.append((org_id, seg_id))
@@ -256,8 +261,8 @@ class AnalysisViewSet(ReadOnlyModelViewSet, mixins.CreateModelMixin, mixins.Dest
             )
         else:
             return Response(
-                data='Already has Survivability results or no SEGMENT exist.',
-                status=status.HTTP_201_CREATED,
+                data='Already has Survivability results or no SEGMENTATION exist.',
+                status=status.HTTP_409_CONFLICT,
             )
 
     @swagger_auto_schema(
@@ -288,7 +293,7 @@ class AnalysisViewSet(ReadOnlyModelViewSet, mixins.CreateModelMixin, mixins.Dest
                 # for analysis in analyses)
                 analysis_exist = is_analysis_exist(scan_obj, 'SUBTYPE')
                 for analysis in analyses:
-                    if analysis['analysis_type'] == 'SEGMENT' and not analysis_exist:
+                    if analysis['analysis_type'] == 'SEGMENTATION' and not analysis_exist:
                         org_id = analysis['input']
                         seg_id = analysis['output']
                         org_seg_ids.append((org_id, seg_id))
@@ -301,8 +306,8 @@ class AnalysisViewSet(ReadOnlyModelViewSet, mixins.CreateModelMixin, mixins.Dest
             )
         else:
             return Response(
-                data='Already has SUBTYPE classification results or no SEGMENT exist.',
-                status=status.HTTP_201_CREATED,
+                data='Already has SUBTYPE classification results or no SEGMENTATION exist.',
+                status=status.HTTP_409_CONFLICT,
             )
 
     @swagger_auto_schema(
@@ -333,7 +338,7 @@ class AnalysisViewSet(ReadOnlyModelViewSet, mixins.CreateModelMixin, mixins.Dest
                 # for analysis in analyses)
                 analysis_exist = is_analysis_exist(scan_obj, 'TP53')
                 for analysis in analyses:
-                    if analysis['analysis_type'] == 'SEGMENT' and not analysis_exist:
+                    if analysis['analysis_type'] == 'SEGMENTATION' and not analysis_exist:
                         org_id = analysis['input']
                         seg_id = analysis['output']
                         org_seg_ids.append((org_id, seg_id))
@@ -346,8 +351,8 @@ class AnalysisViewSet(ReadOnlyModelViewSet, mixins.CreateModelMixin, mixins.Dest
             )
         else:
             return Response(
-                data='Already has TP53 results or no SEGMENT exist.',
-                status=status.HTTP_201_CREATED,
+                data='Already has TP53 results or no SEGMENTATION exist.',
+                status=status.HTTP_409_CONFLICT,
             )
 
     @swagger_auto_schema(
@@ -376,3 +381,9 @@ class AnalysisViewSet(ReadOnlyModelViewSet, mixins.CreateModelMixin, mixins.Dest
                 'No analysis found',
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @swagger_auto_schema(
+    )
+    @action(detail=False, methods=['GET'], permission_classes=[IsAuthenticated])
+    def getModules(self, request, *args, **kwargs):
+        return HttpResponse(json.dumps(settings.GLOBAL_SETTINGS['MODULES']), content_type="application/json,charset=utf-8")

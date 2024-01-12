@@ -310,6 +310,7 @@ const initState = {
   currentTaskOverview: null as ProjectTaskOverview | null,
   currentProjectPermissions: {},
   projects: [] as Project[],
+  modules: {},
   experimentIds: [],
   experiments: {},
   experimentScans: {},
@@ -491,13 +492,16 @@ const {
       state.currentDisplayedScans = scans;
     },
     updateSelectScan(state, scanId) {
+      console.log(scanId)
+
       state.hasSegAnalysis = false;
       state.hasMyoD1Analysis = false;
       state.hasSurvivabilityAnalysis = false;
       state.selectedScan = scanId;
+      console.log(state.selectedScan)
       // Make sure it is existed and finished
-      if (state.scans[scanId].analysis.filter(a => a.analysis_type === 'SEGMENT').length
-        && state.scans[scanId].analysis.filter(a => a.analysis_type === 'SEGMENT')[0].status === 3) {
+      if (state.scans[scanId].analysis.filter(a => a.analysis_type === 'SEGMENTATION').length
+        && state.scans[scanId].analysis.filter(a => a.analysis_type === 'SEGMENTATION')[0].status === 3) {
         state.hasSegAnalysis = true;
       }
       if (state.scans[scanId].analysis.filter(a => a.analysis_type === 'MYOD1').length
@@ -551,6 +555,9 @@ const {
     },
     setProjects(state, projects: Project[]) {
       state.projects = projects;
+    },
+    setModules(state, modules) {
+      state.modules = modules;
     },
     addScanDecision(state, { currentScan, newDecision }) {
       state.scans[currentScan].decisions.push(newDecision);
@@ -682,6 +689,10 @@ const {
     async loadProjects({ commit }) {
       const projects = await djangoRest.projects();
       commit('setProjects', projects);
+    },
+    async loadModules({ commit }) {
+      const modules = await djangoRest.getModules();
+      commit('setModules', modules);
     },
     async loadProject({ commit }, project: Project) {
       commit('resetProject');

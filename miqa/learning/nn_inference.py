@@ -353,7 +353,7 @@ mkdir -p {shared_partition_tmp_directory}/slurm-$SLURM_JOB_NAME.$SLURM_JOB_ID
     shell_path = os.path.join(shared_partition, 'shells')
     modules_path = os.path.join(shared_partition, 'modules')
     shared_partition_tmp_directory = os.path.join(shared_partition, 'tmp')
-    python_script_path = os.path.join(modules_path, settings.GLOBAL_SETTINGS[job_name])
+    python_script_path = os.path.join(modules_path, settings.GLOBAL_SETTINGS['MODULES'][job_name]['script'])
 
     shared_partition_requirements_directory = os.path.join(shared_partition, 'env')
     env = os.path.join(shared_partition_requirements_directory, env_name)

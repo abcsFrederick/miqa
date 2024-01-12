@@ -3,9 +3,13 @@ import _ from 'lodash';
 import {
   mapState, mapGetters, mapMutations, mapActions,
 } from 'vuex';
+import {
+  computed
+} from '@vue/composition-api';
 import UserAvatar from '@/components/UserAvatar.vue';
 import djangoRest from '@/django';
 import { includeScan } from '@/store';
+import store from '@/store';
 import { API_URL, decisionOptions } from '../constants';
 
 export default {
@@ -17,6 +21,21 @@ export default {
       type: Boolean,
       default: false,
     },
+  },
+  beforeCreate(){
+    this.headers = [{ text: 'Experiment', value: 'experimentName', align: 'left' },
+      { text: 'Scan', value: 'name', align: 'left' }
+      ];
+    const modules = computed(() => store.state.modules);
+
+    Object.keys(modules.value).forEach((module) => {
+      let taskHeader = {
+        'text': module,
+        'value': modules.value[module].score_name,
+        'align': 'left'
+      }
+      this.headers.push(taskHeader);
+    });
   },
   data: () => ({
     API_URL,
@@ -30,15 +49,6 @@ export default {
     decisionOptions,
     runableScan: 1,
     selectAnalysis: 'myod1',
-    headers: [
-      { text: 'Experiment', value: 'experimentName', align: 'left' },
-      { text: 'Scan', value: 'name', align: 'left' },
-      { text: 'Segmentation', value: 'seg_highest', align: 'left' },
-      { text: 'MyoD1', value: 'myod1_score', align: 'left' },
-      { text: 'Survivability', value: 'surv_score', align: 'left' },
-      { text: 'Subtype', value: 'subtype_score', align: 'left' },
-      { text: 'Tp53', value: 'tp53_score', align: 'left' }
-    ]
   }),
   computed: {
     ...mapState([
@@ -54,6 +64,7 @@ export default {
       'currentProject',
       'allExperiments',
       'me',
+      'modules',
       'currentProjectPermissions',
       'selectedExperiments'
     ]),
@@ -80,86 +91,36 @@ export default {
           (scanId) => Object.keys(this.scans).includes(scanId),
         ).map((scanId) => {
           const scan = this.scans[scanId];
-          let seg_highest = '';
-          let myod1_score = '';
-          let surv_score = '';
-          let subtype_score = '';
-          let tp53_score = '';
-          let status = ''
+          let analysis_result = {};
+          Object.keys(this.modules).forEach((module) => {
+            analysis_result[this.modules[module].score_name] = undefined;
+          });
+          let status = '';
           let result_obj;
           scan.analysis.forEach(an => {
-            // console.log(an)
-            switch (an.analysis_type) {
-              case 'SEGMENT':
-                if (an.status === 3) {
-                  result_obj = JSON.parse(an.analysis_result);
-                  let score_max = Math.max(...Object.values(result_obj));
-                  seg_highest = Object.keys(result_obj).find(key => result_obj[key] === score_max)
-                } else if (an.status === 2) {
-                  seg_highest = 'Running';
-                } else if (an.status === 4) {
-                  seg_highest = 'Fail';
-                }
-                break;
-              case 'MYOD1':
-                if (an.status === 3) {
-                  result_obj = JSON.parse(an.analysis_result)
-                  myod1_score = result_obj['Positive Score'].toFixed(3);
-                } else if (an.status === 2) {
-                  myod1_score = 'Running';
-                } else if (an.status === 4) {
-                  myod1_score = 'Fail';
-                }
-                break;
-              case 'SURVIVABILITY':
-                if (an.status === 3) {
-                  result_obj = JSON.parse(an.analysis_result);
-                  surv_score = result_obj['secondBest'].toFixed(3);
-                } else if (an.status === 2) {
-                  surv_score = 'Running';
-                } else if (an.status === 4) {
-                  surv_score = 'Fail';
-                }
-                break;
-              case 'SUBTYPE':
-                if (an.status === 3) {
-                  result_obj = JSON.parse(an.analysis_result);
-                  subtype_score = result_obj['Subtype'];
-                } else if (an.status === 2) {
-                  subtype_score = 'Running';
-                } else if (an.status === 4) {
-                  subtype_score = 'Fail';
-                }
-                break;
-              case 'TP53':
-                if (an.status === 3) {
-                  result_obj = JSON.parse(an.analysis_result);
-                  tp53_score = result_obj['tp53 score'].toFixed(3);
-                } else if (an.status === 2) {
-                  tp53_score = 'Running';
-                } else if (an.status === 4) {
-                  tp53_score = 'Fail';
-                }
-                break;
+            let score;
+            if (an.status === 3) {
+              if (an.analysis_type  === 'SEGMENTATION') {
+                result_obj = JSON.parse(an.analysis_result);
+                let score_max = Math.max(...Object.values(result_obj));
+                score = Object.keys(result_obj).find(key => result_obj[key] === score_max)
+              } else {
+                result_obj = JSON.parse(an.analysis_result)
+                score = result_obj[this.modules[an.analysis_type].output_field].toFixed(3);
+              }
+            } else if (an.status === 2) {
+              score = 'Running';
+            } else if (an.status === 4) {
+              score = 'Fail';
+            } else {
+              score = undefined;
             }
-            // if (an.status === 3 && an.analysis_type === 'SEGMENT') {
-            //   let result_obj = JSON.parse(an.analysis_result);
-            //   let score_max = Math.max(...Object.values(result_obj));
-            //   seg_highest = Object.keys(result_obj).find(key => result_obj[key] === score_max)
-            // }
-            // if (an.status === 3 && an.analysis_type === 'MYOD1') {
-            //   let result_obj = JSON.parse(an.analysis_result)
-            //   myod1_score = result_obj['Positive Score'];
-            // }
+            analysis_result[this.modules[an.analysis_type].score_name] = score;
           })
           this.allScans.push({
             experimentName,
             experiment_lockOwner,
-            seg_highest,
-            myod1_score,
-            surv_score,
-            subtype_score,
-            tp53_score,
+            analysis_result,
             ...scan,
             ...this.decisionToRating(scan.decisions),
           });
@@ -305,27 +266,11 @@ export default {
         },
       );
     },
-    seg_analysis() {
+    run_analysis(module) {
       let experiments = this.experimentsForAnalysis();
-      djangoRest.runSegment(experiments).then(res => {
+      djangoRest['run' + module](experiments).then(res => {
         this.$store.commit('updateAlert', {type: 'info', message: res});
       });
-    },
-    myod1_analysis() {
-      let experiments = this.experimentsForAnalysis();
-      djangoRest.runMyoD1(experiments);
-    },
-    survivability_analysis() {
-      let experiments = this.experimentsForAnalysis();
-      djangoRest.runSurvivability(experiments);
-    },
-    subtype_analysis() {
-      let experiments = this.experimentsForAnalysis();
-      djangoRest.runSubtype(experiments);
-    },
-    tp53_analysis() {
-      let experiments = this.experimentsForAnalysis();
-      djangoRest.runTP53(experiments);
     },
     experimentsForAnalysis() {
       var filtered = Object.keys(this.selectedExperiments).filter(function(key) {
@@ -339,6 +284,9 @@ export default {
     // Current displayed scans
     currentItems(scans) {
       this.$store.commit('setScans', scans)
+    },
+    log(item) {
+      console.log(item)
     }
   },
 };
@@ -385,135 +333,6 @@ export default {
             :items-per-page=5
             @current-items="currentItems"
           >
-            <!--<template v-slot:top>
-              <v-dialog
-                v-if="!minimal && MIQAConfig.S3_SUPPORT"
-                v-model="showUploadModal"
-                width="600px"
-              >
-                <template v-slot:activator="{ on, attrs }">
-                  <div
-                    v-bind="attrs"
-                    class="add-scans"
-                    v-on="on"
-                  >
-                    <v-btn
-                      class="green white--text"
-                      @click="() => {experimentNameForUpload = ''}"
-                    >
-                      + Add Scans...
-                    </v-btn>
-                  </div>
-                </template>
-                <v-card>
-                  <v-btn
-                    icon
-                    style="float:right"
-                    @click="showUploadModal=false"
-                  >
-                    <v-icon>mdi-close</v-icon>
-                  </v-btn>
-                  <v-card-title class="text-h6">
-                    Upload Image Files to Experiment
-                  </v-card-title>
-                  <div
-                    class="d-flex px-6"
-                    style="align-items: baseline; justify-content: space-between;"
-                  >
-                    <div
-                      class="d-flex mode-toggle"
-                    >
-                      <span>Upload to New</span>
-                      <v-switch
-                        :value="uploadToExisting"
-                        :disabled="!(orderedExperiments && orderedExperiments.length)"
-                        inset
-                        dense
-                        style="display: inline-block; max-height: 40px; max-width: 60px;"
-                        class="px-3 ma-0"
-                        @change="(value) => {uploadToExisting = value; experimentNameForUpload = ''}"
-                      />
-                      <span
-                        :class="!(orderedExperiments && orderedExperiments.length) ? 'grey--text' : ''"
-                      >
-                        Upload to Existing
-                      </span>
-                    </div>
-                    <div style="max-width:200px">
-                      <v-select
-                        v-if="orderedExperiments && orderedExperiments.length && uploadToExisting"
-                        v-model="experimentNameForUpload"
-                        :items="orderedExperiments"
-                        item-text="name"
-                        label="Select Experiment"
-                        dense
-                      />
-                      <v-text-field
-                        v-else
-                        v-model="experimentNameForUpload"
-                        label="Name new Experiment"
-                      />
-                    </div>
-                  </div>
-                  <div class="ma-5">
-                    <v-file-input
-                      v-model="fileSetForUpload"
-                      label="Image files (.nii.gz, .nii, .mgz, .nrrd, .svs, .tif, .png)"
-                      prepend-icon="mdi-paperclip"
-                      multiple
-                      chips
-                      @click:clear="delayPrepareDropZone"
-                    >
-                      <template #selection="{ index, text }">
-                        <v-chip
-                          v-if="index < 2"
-                          small
-                        >
-                          {{ text }}
-                        </v-chip>
-
-                        <span
-                          v-else-if="index === 2"
-                          class="text-overline grey--text text--darken-3 mx-2"
-                        >
-                          +{{ fileSetForUpload.length - 2 }}
-                          file{{ fileSetForUpload.length - 2 > 1 ? 's' :'' }}
-                        </span>
-                      </template>
-                    </v-file-input>
-                    <div
-                      v-if="fileSetForUpload.length == 0"
-                      id="dropZone"
-                      style="text-align: center"
-                      class="pa-3 drop-zone"
-                      @drop.prevent="addDropFiles"
-                      @dragover.prevent
-                    >
-                      or drag and drop here
-                    </div>
-                  </div>
-                  <v-divider />
-                  <v-card-actions>
-                    <div
-                      v-if="uploadError"
-                      style="color: red;"
-                    >
-                      {{ uploadError }}
-                    </div>
-                    <v-spacer />
-                    <v-btn
-                      :loading="uploading"
-                      :disabled="fileSetForUpload.length < 1 || !experimentNameForUpload"
-                      color="primary"
-                      text
-                      @click="uploadToExperiment()"
-                    >
-                      Upload
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
-            </template>-->
             <template v-slot:group.header="{items, isOpen, toggle}">
               <th colspan="7">
                 <v-checkbox
@@ -586,192 +405,24 @@ export default {
               </th>
             </template>
             <template v-slot:item="{ item }">
-              <tr :data-id="item.id" @click="selectScan">
+              <tr :data-id="item.id" @click="selectScan"> <!-- :load="log(item)" -->
                 <td>
                   {{item.name}}
                 </td>
-                <td v-if="item.seg_highest === 'Running' ">
-                  <v-icon color="orange">mdi-loading mdi-spin</v-icon>
-                </td>
-                <td v-else-if="item.seg_highest === 'Fail' ">
-                  <v-icon color="red">mdi-close-thick</v-icon>
-                </td>
-                <td v-else>
-                  {{item.seg_highest}}
-                </td>
-                <td v-if="item.myod1_score === 'Running' ">
-                  <v-icon color="orange">mdi-loading mdi-spin</v-icon>
-                </td>
-                <td v-else-if="item.myod1_score === 'Fail' ">
-                  <v-icon color="red">mdi-close-thick</v-icon>
-                </td>
-                <td v-else>
-                  {{item.myod1_score}}
-                </td>
-                <td v-if="item.surv_score === 'Running' ">
-                  <v-icon color="orange">mdi-loading mdi-spin</v-icon>
-                </td>
-                <td v-else-if="item.surv_score === 'Fail' ">
-                  <v-icon color="red">mdi-close-thick</v-icon>
-                </td>
-                <td v-else>
-                  {{item.surv_score}}
-                </td>
-
-                <td v-if="item.subtype_score === 'Running' ">
-                  <v-icon color="orange">mdi-loading mdi-spin</v-icon>
-                </td>
-                <td v-else-if="item.subtype_score === 'Fail' ">
-                  <v-icon color="red">mdi-close-thick</v-icon>
-                </td>
-                <td v-else>
-                  {{item.subtype_score}}
-                </td>
-
-                <td v-if="item.tp53_score === 'Running' ">
-                  <v-icon color="orange">mdi-loading mdi-spin</v-icon>
-                </td>
-                <td v-else-if="item.tp53_score === 'Fail' ">
-                  <v-icon color="red">mdi-close-thick</v-icon>
-                </td>
-                <td v-else>
-                  {{item.tp53_score}}
+                <td v-for="(value, key, index) in item.analysis_result" :key="key" > <!-- :load="log(key)" -->
+                  <div v-if="value === 'Running'">
+                    <v-icon color="orange">mdi-loading mdi-spin</v-icon>
+                  </div>
+                  <div v-else-if="value === 'Fail' ">
+                    <v-icon color="red">mdi-close-thick</v-icon>
+                  </div>
+                  <div v-else>
+                    {{value}}
+                  </div>
                 </td>
               </tr>
             </template>
           </v-data-table>
-          <!--<li
-            v-for="experiment of orderedExperiments"
-            :key="`e.${experiment.id}`"
-            class="body-2 pb-5"
-          >
-            <v-card
-              flat
-              class="d-flex pr-2"
-            >
-              <v-row align="center" m=0>
-                <v-checkbox
-                v-model='selectedExperiments'
-                :value="experiment.id"
-                :style="{visibility: allExperiments ? 'hidden' : 'visible'}"></v-checkbox>
-                <v-card flat>
-                  {{ ellipsisText(experiment.name) }}
-                  <UserAvatar
-                    v-if="experiment.lock_owner"
-                    :target-user="experiment.lock_owner"
-                    as-editor
-                  />
-                  <v-dialog
-                    v-else-if="!minimal"
-                    :value="showDeleteModal === experiment.id"
-                    width="600px"
-                  >
-                    <template #activator="{ attrs }">
-                      <div
-                        v-bind="attrs"
-                        style="display: inline"
-                        @click="showDeleteModal = experiment.id"
-                      >
-                        <v-icon>mdi-delete</v-icon>
-                      </div>
-                    </template>
-
-                    <v-card>
-                      <v-btn
-                        icon
-                        style="float:right"
-                        @click="showDeleteModal=false"
-                      >
-                        <v-icon>mdi-close</v-icon>
-                      </v-btn>
-                      <v-card-title class="text-h6">
-                        Confirmation
-                      </v-card-title>
-                      <v-card-text>
-                        Are you sure you want to delete experiment {{ experiment.name }}?
-                      </v-card-text>
-                      <v-divider />
-                      <v-card-actions>
-                        <v-btn
-                          :loading="uploading"
-                          color="gray"
-                          text
-                          @click="() => showDeleteModal = false"
-                        >
-                          Cancel
-                        </v-btn>
-                        <v-btn
-                          :loading="uploading"
-                          color="red"
-                          text
-                          @click="() => deleteExperiment(experiment.id)"
-                        >
-                          Delete
-                        </v-btn>
-                      </v-card-actions>
-                    </v-card>
-                  </v-dialog>
-                </v-card>
-              </v-row>
-              <v-card flat>
-                <v-icon
-                  v-show="experiment === currentExperiment"
-                  :color="loadingIconColor"
-                  class="pl-5"
-                >
-                  {{ loadingIcon }}
-                </v-icon>
-              </v-card>
-            </v-card>
-            <ul class="scans">
-              <li
-                v-for="scan of scansForExperiment(experiment.id)"
-                :key="`s.${scan.id}`"
-                :class="scanStateClass(scan)"
-              >
-                <v-tooltip right>
-                  <template #activator="{ on, attrs }">
-                    <v-btn
-                      v-bind="attrs"
-                      :disabled="!includeScan(scan.id)"
-                      class="ml-0 px-1 scan-name"
-                      href
-                      text
-                      small
-                      active-class=""
-                      v-on="on"
-                      :scan-id="scan.id"
-                      @click="selectScan"
-                    >
-                      <span v-for="an of scan.analysis">
-                        <v-icon v-if="an.status === 3 && an.analysis_type === 'SEGMENT'" 
-                        color="blue">mdi-image</v-icon>
-                        <v-icon v-if="an.status === 3 && an.analysis_type === 'MYOD1'" 
-                        color="red">mdi-alpha-m-circle-outline</v-icon>
-                        <v-icon v-if="an.status === 3 && an.analysis_type === 'SURVIVABILITY'" 
-                        color="green">mdi-alpha-s-circle-outline</v-icon>
-                        <v-icon v-if="an.status === 4" 
-                        color="red">mdi-close-thick</v-icon>
-                        <v-icon v-if="an.status === 2" 
-                        color="orange">mdi-loading mdi-spin</v-icon>
-                      </span>
-                      {{ ellipsisText(scan.name) }}
-                      <span
-                        v-if="scan.decisions.length !== 0"
-                        :class="scan.color + ' pl-3'"
-                        small
-                      >({{ scan.decision }})</span>
-                    </v-btn>
-                  </template>
-                  <span>
-                    {{ scan.decision ? decisionOptions[scan.decision] +', ' : '' }}
-                    {{ scanState(scan) }}
-                  </span>
-                </v-tooltip>
-              </li>
-            </ul>
-          </li>
-        -->
         </ul>
       </div>
       <div
@@ -798,11 +449,12 @@ export default {
             <div
               v-bind="attrs"
               class="add-scans"
+              style="overflow: hidden;"
               v-on="on"
             >
               <v-btn
                 class="green white--text"
-                style="margin-bottom: 4px"
+                style="margin-bottom: 4px;"
                 @click="() => {experimentNameForUpload = ''}"
               >
                 + Add Scans...
@@ -917,72 +569,18 @@ export default {
             </v-card-actions>
           </v-card>
         </v-dialog>
-        <v-row 
+        <v-row
           v-if="currentProject.experiments.length"
           style="overflow: hidden;"
           class="analysis"
-        >
-          <v-btn
-            class="blue white--text"
-            style="margin-bottom: 4px;"
-            @click="seg_analysis"
-          >
-              <v-icon>mdi-numeric-1-box</v-icon>
-              Segmentation
-          </v-btn>
-        </v-row>
-        <v-row 
-          v-if="currentProject.experiments.length"
-          class="analysis"
-        >
-          <v-btn
-            class="blue white--text"
-            style="margin-bottom: 4px"
-            @click="myod1_analysis"
-          >
-              <v-icon>mdi-numeric-2-box</v-icon>
-              MyoD1
-          </v-btn>
-        </v-row>
-        <v-row 
-          v-if="currentProject.experiments.length"
-          style="overflow: hidden;"
-          class="analysis"
-        >
-          <v-btn
-            class="blue white--text"
-            style="margin-bottom: 4px;"
-            @click="survivability_analysis"
-          >
-              <v-icon>mdi-numeric-2-box</v-icon>
-              Survivability
-          </v-btn>
-        </v-row>
-        <v-row 
-          v-if="currentProject.experiments.length"
-          class="analysis"
-        >
-          <v-btn
-            class="blue white--text"
-            style="margin-bottom: 4px"
-            @click="subtype_analysis"
-          >
-              <v-icon>mdi-numeric-2-box</v-icon>
-              SUBTYPE
-          </v-btn>
-        </v-row>
-        <v-row 
-          v-if="currentProject.experiments.length"
-          class="analysis"
-        >
-          <v-btn
-            class="blue white--text"
-            style="margin-bottom: 4px"
-            @click="tp53_analysis"
-          >
-              <v-icon>mdi-numeric-2-box</v-icon>
-              TP53
-          </v-btn>
+          v-for="(value, key, index) in modules" :key="key">
+            <v-btn
+              class="blue white--text"
+              style="margin-bottom: 4px;"
+              @click="run_analysis(key)"
+            >
+              {{key}}
+            </v-btn>
         </v-row>
       </v-card>
     </div>

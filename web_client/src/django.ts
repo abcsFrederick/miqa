@@ -57,6 +57,7 @@ const djangoClient = {
   },
   async login() {
     // window.location.href = 'http://localhost:8000/accounts/itrust/login/';
+    // window.location.href = 'https://clinomics.ccr.cancer.gov/rms2/login.html';
     await oauthClient.redirectToLogin();
   },
   async logout() {
@@ -199,28 +200,32 @@ const djangoClient = {
     });
     return response?.data;
   },
-  async runSegment(experiments: string[]): Promise<ResponseData> {
+  async getModules(): Promise<ResponseData> {
+    const response = await apiClient.get(`/analysis/getModules`);
+    return response?.data;
+  },
+  async runSEGMENTATION(experiments: string[]): Promise<ResponseData> {
     if (!experiments) return undefined;
     const response = await apiClient.post(`/analysis/segment_all`, {
       params: { experiments: experiments },
     });
     return response?.data;
   },
-  async runMyoD1(experiments: string[]): Promise<ResponseData> {
+  async runMYOD1(experiments: string[]): Promise<ResponseData> {
     if (!experiments) return undefined;
     const response = await apiClient.post(`/analysis/myod1_all`, {
       params: { experiments: experiments },
     });
     return response?.data;
   },
-  async runSurvivability(experiments: string[]): Promise<ResponseData> {
+  async runSURVIVABILITY(experiments: string[]): Promise<ResponseData> {
     if (!experiments) return undefined;
     const response = await apiClient.post(`/analysis/survivability_all`, {
       params: { experiments: experiments },
     });
     return response?.data;
   },
-  async runSubtype(experiments: string[]): Promise<ResponseData> {
+  async runSUBTYPE(experiments: string[]): Promise<ResponseData> {
     if (!experiments) return undefined;
     const response = await apiClient.post(`/analysis/subtype_all`, {
       params: { experiments: experiments },
