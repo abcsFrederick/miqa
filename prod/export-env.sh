@@ -34,8 +34,8 @@ export client_secret=2199bc68-778f-4672-a2f2-44dc6e8ea037
 # prod
 export server_url=https://sts.nih.gov
 export host=fsivgl-rms01p
-export client_host=https://fsabcl-onc01p.ncifcrf.gov
+export client_host=https://fsivgl-rms01p.ncifcrf.gov
 # public
 export server_url=https://sts.nih.gov
 export host=fsivgl-rms01p
-export client_host=https://clinomics.ccr.cancer.gov
+export client_host=https://fsivgl-rms01p.ccr.cancer.gov

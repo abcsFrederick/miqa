@@ -105,8 +105,11 @@ export default {
                 let score_max = Math.max(...Object.values(result_obj));
                 score = Object.keys(result_obj).find(key => result_obj[key] === score_max)
               } else {
-                result_obj = JSON.parse(an.analysis_result)
-                score = result_obj[this.modules[an.analysis_type].output_field].toFixed(3);
+                result_obj = JSON.parse(an.analysis_result);
+                score = result_obj[this.modules[an.analysis_type].output_field];
+                if (typeof result === 'number') {
+                  score = score.toFixed(3);
+                }
               }
             } else if (an.status === 2) {
               score = 'Running';

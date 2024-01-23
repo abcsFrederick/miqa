@@ -293,7 +293,7 @@ class AnalysisViewSet(ReadOnlyModelViewSet, mixins.CreateModelMixin, mixins.Dest
                 # for analysis in analyses)
                 analysis_exist = is_analysis_exist(scan_obj, 'SUBTYPE')
                 for analysis in analyses:
-                    if analysis['analysis_type'] == 'SEGMENTATION' and not analysis_exist:
+                    if not analysis_exist:
                         org_id = analysis['input']
                         seg_id = analysis['output']
                         org_seg_ids.append((org_id, seg_id))
@@ -306,7 +306,7 @@ class AnalysisViewSet(ReadOnlyModelViewSet, mixins.CreateModelMixin, mixins.Dest
             )
         else:
             return Response(
-                data='Already has SUBTYPE classification results or no SEGMENTATION exist.',
+                data='Already has SUBTYPE classification results.',
                 status=status.HTTP_409_CONFLICT,
             )
 

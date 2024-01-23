@@ -205,6 +205,7 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
         """LOGIN_URL also needs to be behind MIQA_URL_PREFIX."""
         return 'http://localhost:8000/accounts/itrust/login/'
         # return 'https://' + os.getenv('host') + '.ncifcrf.gov/rms2/accounts/itrust/login/'
+        # Following will miss state param because it does not run via oauth2 login func()
         # return 'https://' + os.getenv('host') + '.ncifcrf.gov/miqa/login.html'
         return os.getenv('client_host') +'/rms2/login.html'
     @property
