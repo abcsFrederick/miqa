@@ -31,7 +31,7 @@ class MiqaMixin(ConfigMixin):
     # This is required for the /api/v1/logout/ view to have access to the session cookie.
     CORS_ALLOW_CREDENTIALS = True
 
-    CORS_ORIGIN_ALLOW_ALL = False
+    CORS_ORIGIN_ALLOW_ALL = True
     CORS_ORIGIN_WHITELIST = (
       os.getenv('client_host'),
     )
@@ -150,9 +150,14 @@ class MiqaMixin(ConfigMixin):
                 'LOCATION': '127.0.0.1:11211',
             }
         }
+        configuration.MIDDLEWARE = [
+            "corsheaders.middleware.CorsMiddleware",
+            "django.middleware.common.CommonMiddleware",
+        ] + configuration.MIDDLEWARE
 class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default='http://localhost:8081/')
     # HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default=os.getenv('client_host')+'/rms2/')
+    HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default=os.getenv('client_host') + '/rms2_web/index.html')
     DevelopmentBaseConfiguration.SOCIALACCOUNT_PROVIDERS = {
         "openid_connect": {
             "SERVERS": [
@@ -198,13 +203,14 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     SESSION_COOKIE_SAMESITE = None
 
     # True for remote minio
-    MINIO_STORAGE_USE_HTTPS = False
+    MINIO_STORAGE_USE_HTTPS = True
     USE_X_FORWARDED_HOST = True
     @property
     def LOGIN_URL(self):
         """LOGIN_URL also needs to be behind MIQA_URL_PREFIX."""
         return 'http://localhost:8000/accounts/itrust/login/'
         # return 'https://' + os.getenv('host') + '.ncifcrf.gov/rms2/accounts/itrust/login/'
+        # Following will miss state param because it does not run via oauth2 login func()
         # return 'https://' + os.getenv('host') + '.ncifcrf.gov/miqa/login.html'
         return os.getenv('client_host') +'/rms2/login.html'
     @property
@@ -218,6 +224,7 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
         """When login is completed without `next` set, redirect to MIQA_URL_PREFIX."""
         return os.getenv('client_host') + '/rms2'
         # return self.MIQA_URL_PREFIX
+        return 'https://clinomics.ccr.cancer.gov/rmsv2/index.html'
 
     @staticmethod
     def before_binding(configuration: ComposedConfiguration) -> None:
