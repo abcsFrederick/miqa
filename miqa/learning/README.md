@@ -13,13 +13,14 @@ pip install -r ./miqa/learning/requirements.txt
 ```
 
 ## Get the data
-For example, copy [PredictHD_small](https://drive.google.com/drive/u/1/folders/1SYY5LdKvU6fHgty1ynYXsVzqhGamsZmM) from the shared Google Drive into `nn_work_dir`, as well as files `T1_fold0.csv`, `T1_fold1.csv` and `T1_fold2.csv` from [Learning](https://drive.google.com/drive/u/1/folders/1uT24WMjZLt7IJWPXR-K7YYwiFUSomr_L).
+For example, copy `PredictHD_small` from the shared Google Drive into `nn_work_dir`, as well as files `T1_fold0.csv`, `T1_fold1.csv` and `T1_fold2.csv` from `Learning`.
 Now edit the paths inside `T1_fold*.csv` files to match the path on your file system, e.g.:
 ```shell
 sed -i 's+P:/PREDICTHD_BIDS_DEFACE/+/home/exampleUser/nn_work_dir/PredictHD_small/+g' T1_fold0.csv
 sed -i 's+P:/PREDICTHD_BIDS_DEFACE/+/home/exampleUser/nn_work_dir/PredictHD_small/+g' T1_fold1.csv
 sed -i 's+P:/PREDICTHD_BIDS_DEFACE/+/home/exampleUser/nn_work_dir/PredictHD_small/+g' T1_fold2.csv
 ```
+Note: To access [PredictHD](https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000222.v6.p2) data, a request needs to be made.
 
 ## Run training
 To run training on the 3-fold cross-validation using fold 0 as validation set and folds 1 and 2 as training set, use:
