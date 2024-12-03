@@ -66,6 +66,7 @@ class MiqaMixin(ConfigMixin):
         configuration.INSTALLED_APPS = [
             'miqa.core.apps.CoreConfig',
             'auth_style',
+            'debug_toolbar',
         ] + configuration.INSTALLED_APPS
 
         # Install additional apps
@@ -195,7 +196,7 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     SECURE_SSL_REDIRECT = False
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     
-    CSRF_TRUSTED_ORIGINS = values.ListValue(environ=True, default=['https://fsabcl-onc01d.ncifcrf.gov/', 'https://fsabcl-onc01p.ncifcrf.gov/'])
+    CSRF_TRUSTED_ORIGINS = values.ListValue(environ=True, default=['https://clinomics.ccr.cancer.gov/', 'https://fsabcl-onc03p.ncifcrf.gov/'])
     CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
     CSRF_COOKIE_NAME = 'csrftoken'
     CSRF_COOKIE_SECURE = True
