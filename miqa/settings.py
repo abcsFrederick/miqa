@@ -229,7 +229,7 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
         configuration.TEMPLATES[0]['DIRS'] += [
             configuration.BASE_DIR / 'staticfiles',
         ]
-
+        print(configuration)
         configuration.STORAGES.update(
             {
                 "default": {
