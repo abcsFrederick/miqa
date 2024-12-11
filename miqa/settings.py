@@ -66,7 +66,6 @@ class MiqaMixin(ConfigMixin):
         configuration.INSTALLED_APPS = [
             'miqa.core.apps.CoreConfig',
             'auth_style',
-            'debug_toolbar',
         ] + configuration.INSTALLED_APPS
 
         # Install additional apps
