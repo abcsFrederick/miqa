@@ -173,7 +173,14 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
             ]
         }
     }
-
+    DevelopmentBaseConfiguration.STORAGES.update(
+            {
+                "default": {
+                    "BACKEND": "django.core.files.storage.FileSystemStorage",
+                    "LOCATION": "/mnt/docker/rms2_local"
+                }
+            }
+        )
     ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
     ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
     ACCOUNT_EMAIL_REQUIRED = True 
@@ -305,7 +312,7 @@ class ProductionConfiguration(MiqaMixin, ProductionBaseConfiguration):
         """When login is completed without `next` set, redirect to MIQA_URL_PREFIX."""
         # return os.getenv('client_host') + '/rms2'
         # return self.MIQA_URL_PREFIX
-        return f'{os.getenv('client_host') / "rmsv2/index.html"}/'
+        return f'{os.getenv("client_host") / "rmsv2/index.html"}/'
 
     @staticmethod
     def before_binding(configuration: ComposedConfiguration) -> None:
