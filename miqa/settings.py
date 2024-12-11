@@ -173,7 +173,14 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
             ]
         }
     }
-
+    DevelopmentBaseConfiguration.STORAGES.update(
+            {
+                "default": {
+                    "BACKEND": "django.core.files.storage.FileSystemStorage",
+                    "LOCATION": "/mnt/docker/rms2_local"
+                }
+            }
+        )
     ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
     ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
     ACCOUNT_EMAIL_REQUIRED = True 
