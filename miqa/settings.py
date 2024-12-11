@@ -229,15 +229,8 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
         configuration.TEMPLATES[0]['DIRS'] += [
             configuration.BASE_DIR / 'staticfiles',
         ]
-        print(configuration)
-        configuration.STORAGES.update(
-            {
-                "default": {
-                    "BACKEND": "django.core.files.storage.FileSystemStorage",
-                    "LOCATION": "/mnt/docker/rms2_local"
-                }
-            }
-        )
+    DevelopmentBaseConfiguration.DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+    MEDIA_ROOT ="/mnt/docker/rms2_local"
 
 
 class TestingConfiguration(MiqaMixin, TestingBaseConfiguration):
