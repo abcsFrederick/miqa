@@ -32,10 +32,11 @@ class MiqaMixin(ConfigMixin):
     CORS_ALLOW_CREDENTIALS = True
 
     CORS_ORIGIN_ALLOW_ALL = True
+    '''
     CORS_ORIGIN_WHITELIST = (
       os.getenv('client_host'),
     )
-    
+    '''
     # CORS_ALLOWED_ORIGINS = [os.getenv('client_host')]
     # CORS_ALLOW_HEADERS = ('*')
     # CORS_EXPOSE_HEADERS = ['Set-Cookie']
@@ -50,8 +51,6 @@ class MiqaMixin(ConfigMixin):
 
     # Demo mode is for app.miqaweb.io (Do not enable for normal instances)
     DEMO_MODE = values.BooleanValue(environ=True, default=False)
-    # ITRUST Authentication
-    ITRUST_MODE = values.BooleanValue(environ=True, default=True)
     # It is recommended to enable the following for demo mode:
     NORMAL_USERS_CAN_CREATE_PROJECTS = values.BooleanValue(environ=True, default=False)
     # Enable the following to replace null creation times for scan decisions with import time
@@ -59,7 +58,10 @@ class MiqaMixin(ConfigMixin):
 
     # Override default signup sheet to ask new users for first and last name
     ACCOUNT_FORMS = {'signup': 'miqa.core.rest.accounts.AccountSignupForm'}
-
+    '''
+    # ITRUST Authentication
+    ITRUST_MODE = values.BooleanValue(environ=True, default=True)
+    '''
     @staticmethod
     def before_binding(configuration: ComposedConfiguration) -> None:
         # Install local apps first, to ensure any overridden resources are found first
@@ -67,12 +69,17 @@ class MiqaMixin(ConfigMixin):
             'miqa.core.apps.CoreConfig',
             'auth_style',
         ] + configuration.INSTALLED_APPS
-
+        '''
         # Install additional apps
         configuration.INSTALLED_APPS += [
             's3_file_field',
             'guardian',
             'allauth.socialaccount.providers.openid_connect'
+        ]
+        '''
+        configuration.INSTALLED_APPS += [
+            's3_file_field',
+            'guardian',
         ]
 
         configuration.TEMPLATES[0]['DIRS'] += [
@@ -141,7 +148,7 @@ class MiqaMixin(ConfigMixin):
             'COHORT_MYOD1': '/mnt/hpc/webdata/server/' + os.getenv('host') + '/data/rms_myod1_cohort.csv',
             'COHORT_SURVIVABILITY': '/mnt/hpc/webdata/server/' + os.getenv('host') + '/data/rms_survivability_cohort.csv'
         }
-
+        '''
         configuration.SESSIONS_ENGINE='django.contrib.sessions.backends.cache'
 
         configuration.CACHES = {
@@ -150,12 +157,15 @@ class MiqaMixin(ConfigMixin):
                 'LOCATION': '127.0.0.1:11211',
             }
         }
+        
         configuration.MIDDLEWARE = [
             "corsheaders.middleware.CorsMiddleware",
             "django.middleware.common.CommonMiddleware",
         ] + configuration.MIDDLEWARE
+        '''
 class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
-    HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default=os.getenv('client_host') + '/rms2_web/index.html')
+    HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default=os.getenv('client_host'))
+    '''
     DevelopmentBaseConfiguration.SOCIALACCOUNT_PROVIDERS = {
         "openid_connect": {
             "SERVERS": [
@@ -179,7 +189,7 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     ACCOUNT_UNIQUE_EMAIL = True 
     ACCOUNT_USERNAME_REQUIRED = True 
     ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
-    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
 
     SOCIALACCOUNT_LOGIN_ON_GET = True
     SOCIALACCOUNT_EMAIL_REQUIRED = False
@@ -202,22 +212,24 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     SESSION_COOKIE_SAMESITE = None
 
     # True for remote minio
-    MINIO_STORAGE_USE_HTTPS = True
+
+    # MINIO_STORAGE_USE_HTTPS = True
     USE_X_FORWARDED_HOST = True
     @property
     def LOGIN_URL(self):
         """LOGIN_URL also needs to be behind MIQA_URL_PREFIX."""
-        return os.getenv('client_host') + '/rms2/login.html'
-    @property
-    def STATIC_URL(self):
-        """Prepend the MIQA_URL_PREFIX to STATIC_URL."""
-        return f'{Path(self.MIQA_URL_PREFIX) / "rms2/static"}/'
+        return os.getenv('client_host') + '/accounts/login/'
+    # @property
+    # def STATIC_URL(self):
+    #     """Prepend the MIQA_URL_PREFIX to STATIC_URL."""
+    #     return f'{Path(self.MIQA_URL_PREFIX) / "rms2/static"}/'
 
     @property
     def LOGIN_REDIRECT_URL(self):
         # Do not forget to set application in django with corresponding redirect url (with '/')
         """When login is completed without `next` set, redirect to MIQA_URL_PREFIX."""
-        return os.getenv('client_host') + '/rmsv2/index.html'
+        return os.getenv('client_host')
+        # return os.getenv('client_host') + '/rmsv2/index.html'
 
     @staticmethod
     def before_binding(configuration: ComposedConfiguration) -> None:
@@ -228,10 +240,10 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
         configuration.TEMPLATES[0]['DIRS'] += [
             configuration.BASE_DIR / 'staticfiles',
         ]
-    DevelopmentBaseConfiguration.DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
-    MEDIA_ROOT ="/mnt/docker/rms2_local"
+    # DevelopmentBaseConfiguration.DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+    # MEDIA_ROOT ="/mnt/docker/rms2_local"
 
-
+    '''
 class TestingConfiguration(MiqaMixin, TestingBaseConfiguration):
     # We would like to test that the celery tasks work correctly when triggered from the API
     CELERY_TASK_ALWAYS_EAGER = True

@@ -58,6 +58,7 @@ const djangoClient = {
   async login() {
     // window.location.href = 'http://localhost:8000/accounts/itrust/login/';
     // window.location.href = 'https://clinomics.ccr.cancer.gov/rms2/login.html';
+    console.log('redirect')
     await oauthClient.redirectToLogin();
   },
   async logout() {

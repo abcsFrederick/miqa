@@ -2,7 +2,7 @@ locally install postgre with postgres as user/password, set pg_hha.conf as md5 i
 
 install postgre with yum install 
 and start/enable
-sudo su - postgre
+sudo su - postgres
 psql
 ALTER USER postgres PASSWORD 'postgres';
 
