@@ -17,5 +17,6 @@ export default {
 html {
   overflow-y: auto !important;
   font-size: 22px !important;
+  zoom: 0.5;
 }
 </style>

@@ -11,6 +11,7 @@ from .scan import ScanViewSet
 from .scan_decision import ScanDecisionViewSet
 from .user import UserViewSet
 from .viewers import Viewers
+from . import Viewers
 
 __all__ = [
     'ExperimentViewSet',

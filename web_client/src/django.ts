@@ -164,16 +164,35 @@ const djangoClient = {
     if (!experimentId || !files) return undefined;
     // Promise.all maintains order so we can reference filenames by index
     const uploadResponses = await Promise.all(files.map(
-      (file) => s3ffClient.uploadFile(file, 'core.Frame.content'),
-    ));
-    await Promise.all(uploadResponses.map(
-      async (uploadResponse, index) => apiClient.post('/frames', {
-        experiment: experimentId,
-        content: uploadResponse.value,
-        filename: files[index].name,
-      }),
+      async (file) => {
+        var formData = new FormData();
+        formData.append("filename", file.name);
+        formData.append("experiment", experimentId);
+        formData.append("content", file);
+        
+        await apiClient.post('/frames', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+      }
     ));
   },
+  // Upload to S3 bucket
+  // async uploadToExperiment(experimentId: string, files: File[]) {
+  //   if (!experimentId || !files) return undefined;
+  //   // Promise.all maintains order so we can reference filenames by index
+  //   const uploadResponses = await Promise.all(files.map(
+  //     (file) => s3ffClient.uploadFile(file, 'core.Frame.content'),
+  //   ));
+  //   await Promise.all(uploadResponses.map(
+  //     async (uploadResponse, index) => apiClient.post('/frames', {
+  //       experiment: experimentId,
+  //       content: uploadResponse.value,
+  //       filename: files[index].name,
+  //     }),
+  //   ));
+  // },
   async setExperimentNote(experimentId: string, note: string): Promise<ResponseData> {
     if (!experimentId) return undefined;
     const response = await apiClient.post(`/experiments/${experimentId}/note`, { note });

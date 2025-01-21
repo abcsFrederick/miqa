@@ -15,6 +15,8 @@ from django.contrib.auth.models import User
 import large_image
 import pandas
 from rest_framework.exceptions import APIException
+import shutil
+
 
 from miqa.core.conversion.import_export_csvs import (  # IMPORT_CSV_COLUMNS,
     IMPORT_CSV_COLUMNS_RMS,
@@ -475,9 +477,8 @@ def get_path(frame, *args, **kwargs):
         root = str(Path(kwargs['_tempdir'], kwargs['sub']))
     if frame.storage_mode == StorageMode.LOCAL_PATH:
         # move to NFS if neccessary or symlink under same folder for processing
-        symlink_path = Path(root, frame.raw_path.split('/')[-1])
-        Path(symlink_path).symlink_to(frame.raw_path)
-        path = symlink_path
+        path = Path(root, frame.raw_path.split('/')[-1])
+        shutil.copy(frame.raw_path, path)
     else:
         path = Path(root, frame.content.name.split('/')[-1])
         with open(path, 'wb') as fd:

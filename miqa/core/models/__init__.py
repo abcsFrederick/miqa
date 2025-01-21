@@ -7,6 +7,7 @@ from .project import Project
 from .scan import Scan
 from .scan_decision import ScanDecision
 
+
 __all__ = [
     'Analysis',
     'Evaluation',
@@ -15,5 +16,5 @@ __all__ = [
     'GlobalSettings',
     'Project',
     'Scan',
-    'ScanDecision',
+    'ScanDecision'
 ]

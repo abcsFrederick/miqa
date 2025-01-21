@@ -39,3 +39,4 @@ export client_host=https://fsivgl-rms01p.ncifcrf.gov
 export server_url=https://sts.nih.gov
 export host=fsivgl-rms01p
 export client_host=https://fsivgl-rms01p.ccr.cancer.gov
+export workspace=fsivgl-rms01p
