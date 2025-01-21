@@ -39,6 +39,7 @@ router.register('users', UserViewSet)
 
 router.register('analysis', AnalysisViewSet, basename='analysis')
 
+
 # OpenAPI generation
 schema_view = get_schema_view(
     openapi.Info(title='MIQA', default_version='v1', description=''),
@@ -63,12 +64,12 @@ urlpatterns = [
     path('api/docs/redoc/', schema_view.with_ui('redoc'), name='docs-redoc'),
     path('api/docs/swagger/', schema_view.with_ui('swagger'), name='docs-swagger'),
     path('info/<str:wsi>', Viewers.getInfo, name='info'),
-    path('viewer/<str:wsi>/<int:z>/<int:x>_<int:y>.jpeg', Viewers.getTile, name='viewer'),
+    path('viewer/<str:wsi>/<int:z>/<int:x>_<int:y>.jpeg', Viewers.getTile, name='viewer')
 ]
 
-urlpatterns = [
-    path('accounts/login/', CustomizedLoginView.as_view()),
-] + urlpatterns
+# urlpatterns = [
+#     path('accounts/login/', CustomizedLoginView.as_view()),
+# ] + urlpatterns
 if settings.DEMO_MODE:
     urlpatterns = [
         path('accounts/login/', DemoModeLoginView.as_view()),

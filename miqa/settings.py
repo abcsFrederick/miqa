@@ -26,7 +26,7 @@ class MiqaMixin(ConfigMixin):
     BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
     # Django logins should only last for 30 minutes, the same as the duration of the OAuth token.
-    SESSION_COOKIE_AGE = 1800
+    SESSION_COOKIE_AGE = 18000
 
     # This is required for the /api/v1/logout/ view to have access to the session cookie.
     CORS_ALLOW_CREDENTIALS = True
@@ -69,17 +69,11 @@ class MiqaMixin(ConfigMixin):
             'miqa.core.apps.CoreConfig',
             'auth_style',
         ] + configuration.INSTALLED_APPS
-        '''
         # Install additional apps
         configuration.INSTALLED_APPS += [
             's3_file_field',
             'guardian',
             'allauth.socialaccount.providers.openid_connect'
-        ]
-        '''
-        configuration.INSTALLED_APPS += [
-            's3_file_field',
-            'guardian',
         ]
 
         configuration.TEMPLATES[0]['DIRS'] += [
@@ -112,7 +106,7 @@ class MiqaMixin(ConfigMixin):
             # 'DATASET': '/scratch/IVG_scratch/ziaeid2/sarcoma/Dataset/',
             # 'DATASET': '/var/opt/MIQA/miqa/samples/WSI/',
             'DATASET': '/mnt/hpc/webdata/server/fsivgl-rms01d/shared_data/WSI/',
-            'SHARED_PARTITION': '/mnt/hpc/webdata/server/' + os.getenv('host') + '/',
+            'SHARED_PARTITION': '/mnt/hpc/webdata/server/' + os.getenv('workspace') + '/',
             'MODULES': {
                 'SEGMENTATION': {
                     'color': '#008ffb',
@@ -145,10 +139,10 @@ class MiqaMixin(ConfigMixin):
                     'score_name': 'subtype_score'
                 }
             },
-            'COHORT_MYOD1': '/mnt/hpc/webdata/server/' + os.getenv('host') + '/data/rms_myod1_cohort.csv',
-            'COHORT_SURVIVABILITY': '/mnt/hpc/webdata/server/' + os.getenv('host') + '/data/rms_survivability_cohort.csv'
+            'COHORT_MYOD1': '/mnt/hpc/webdata/server/' + os.getenv('workspace') + '/data/rms_myod1_cohort.csv',
+            'COHORT_SURVIVABILITY': '/mnt/hpc/webdata/server/' + os.getenv('workspace') + '/data/rms_survivability_cohort.csv'
         }
-        '''
+
         configuration.SESSIONS_ENGINE='django.contrib.sessions.backends.cache'
 
         configuration.CACHES = {
@@ -157,26 +151,26 @@ class MiqaMixin(ConfigMixin):
                 'LOCATION': '127.0.0.1:11211',
             }
         }
-        
         configuration.MIDDLEWARE = [
+            "django.contrib.sessions.middleware.SessionMiddleware",
+            "allauth.account.middleware.AccountMiddleware",
             "corsheaders.middleware.CorsMiddleware",
             "django.middleware.common.CommonMiddleware",
         ] + configuration.MIDDLEWARE
-        '''
 class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default=os.getenv('client_host'))
-    '''
     DevelopmentBaseConfiguration.SOCIALACCOUNT_PROVIDERS = {
         "openid_connect": {
-            "SERVERS": [
+            "APPS": [
                 {
-                    "id": "itrust",  # 30 characters or less
+                    "provider_id": "itrust",  # 30 characters or less
                     "name": "ITRUST server",
-                    "server_url": os.getenv('server_url'),
                     "token_auth_method": "code",
-                    "APP": {
-                        "client_id": os.getenv('client_id'),
-                        "secret": os.getenv('client_secret'),
+                    "client_id": os.getenv('client_id'),
+                    "secret": os.getenv('client_secret'),
+                    "settings": {
+                        # add it in Admin UI as well
+                        "server_url": os.getenv('server_url')
                     },
                 },
             ]
@@ -218,7 +212,7 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     @property
     def LOGIN_URL(self):
         """LOGIN_URL also needs to be behind MIQA_URL_PREFIX."""
-        return os.getenv('client_host') + '/accounts/login/'
+        return os.getenv('client_host') + '/accounts/itrust/login/'
     # @property
     # def STATIC_URL(self):
     #     """Prepend the MIQA_URL_PREFIX to STATIC_URL."""
@@ -240,10 +234,10 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
         configuration.TEMPLATES[0]['DIRS'] += [
             configuration.BASE_DIR / 'staticfiles',
         ]
-    # DevelopmentBaseConfiguration.DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
-    # MEDIA_ROOT ="/mnt/docker/rms2_local"
+    DevelopmentBaseConfiguration.DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+    MEDIA_ROOT ="/mnt/docker/rms2_local"
+    S3_SUPPORT = False
 
-    '''
 class TestingConfiguration(MiqaMixin, TestingBaseConfiguration):
     # We would like to test that the celery tasks work correctly when triggered from the API
     CELERY_TASK_ALWAYS_EAGER = True

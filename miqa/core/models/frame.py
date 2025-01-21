@@ -32,7 +32,9 @@ class Frame(TimeStampedModel, models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     scan = models.ForeignKey('Scan', related_name='frames', on_delete=models.CASCADE)
-    content = S3FileField(null=True)
+    # content = S3FileField(null=True)
+    content = models.FileField(upload_to='uploads/%Y/%m/%d/')  # Files will be stored in MEDIA_ROOT/my_files/
+    # content = models.FileField
     raw_path = models.CharField(max_length=500, blank=False)
     frame_number = models.IntegerField(default=0)
     thumbnail_path = models.CharField(max_length=500, blank=True)
@@ -80,6 +82,12 @@ class Frame(TimeStampedModel, models.Model):
             )
         return None
 
+    # def save(self, *args, **kwargs):
+    #     if self.content:
+    #         print(12312312)
+    #         print(self.content.path)
+    #         self.raw_path = self.content.path
+    #     super().save(*args, **kwargs)
 
 # Remove content from storage before deleting frame object
 @receiver(pre_delete, sender=Frame)

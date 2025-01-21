@@ -35,4 +35,5 @@ export client_secret=e246a609-243c-45f4-9f52-f75d9b2e85d9
 # dev
 export server_url=https://stsstg.nih.gov
 export host=localhost:8000
+export workspace=fsivgl-rms01d
 export client_host=http://localhost:8000

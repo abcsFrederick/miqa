@@ -7,6 +7,9 @@ from .project import Project
 from .scan import Scan
 from .scan_decision import ScanDecision
 
+from .file import File
+
+
 __all__ = [
     'Analysis',
     'Evaluation',
@@ -16,4 +19,5 @@ __all__ = [
     'Project',
     'Scan',
     'ScanDecision',
+    'File'
 ]

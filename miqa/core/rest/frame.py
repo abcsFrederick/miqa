@@ -131,13 +131,17 @@ class FrameViewSet(
             raise APIException(
                 'Provide either a parent scan or grandparent experiment for this frame.'
             )
-
-        content_serializer = FrameContentSerializer(data=dict(request.data, scan=scan.id))
+        # content_serializer = FrameContentSerializer(data=dict(request.data, scan=scan.id))
+        content_serializer = FrameContentSerializer(data=dict(request.data, content=request.FILES.get('content'), scan=scan.id))
         content_serializer.is_valid(raise_exception=True)
         new_frame = content_serializer.save()
+        new_frame.raw_path = new_frame.content.path
+        new_frame.save()
         if FrameSerializer(new_frame).data['extension'] in ['.svs', '.tif']:
+            print(1)
             wsi_thumbnail.delay(str(new_frame.id))
         else:
+            print(2)
             evaluate_frame_content.delay(str(new_frame.id))
         return Response(
             FrameSerializer(new_frame).data,
@@ -156,6 +160,8 @@ class FrameViewSet(
             fd = open(frame.raw_path, 'rb')
             resp = FileResponse(fd, filename=str(frame.frame_number))
             resp['Content-Length'] = frame.size
+            print(frame.raw_path)
+            print(resp)
             return resp
         raise BadRequest('This endpoint is only valid for local files on the server machine.')
 

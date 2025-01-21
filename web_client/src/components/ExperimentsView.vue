@@ -444,7 +444,7 @@ export default {
       </div>
       <v-card style="box-shadow:none; width: 20%" class="pl-2 pr-3">
         <v-dialog
-          v-if="!minimal && MIQAConfig.S3_SUPPORT"
+          v-if="!minimal"
           v-model="showUploadModal"
           width="600px"
         >
