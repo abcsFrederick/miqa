@@ -2,7 +2,7 @@
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 
-from .models import Analysis, Evaluation, Experiment, Frame, Project, Scan, ScanDecision, File
+from .models import Analysis, Evaluation, Experiment, Frame, Project, Scan, ScanDecision
 
 
 @admin.register(Experiment)
