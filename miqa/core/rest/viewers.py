@@ -5,7 +5,7 @@ from rest_framework import status
 import os 
 import json
 import large_image_source_tiff
-import pyvips
+
 from django.conf import settings
 
 class Viewers(APIView):
