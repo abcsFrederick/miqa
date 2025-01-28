@@ -56,10 +56,10 @@ setup(
         'django-s3-file-field[boto3]',
         'gunicorn',
         'schema',
-        'openslide-python',
+        'openslide-python'
         # large-image[all] girder-large-image-annotation[tasks]
         # --find-links https://girder.github.io/large_image_wheels
-        'large_image'
+        #'large_image'
     ],
     extras_require={
         'dev': [
