@@ -36,4 +36,7 @@ export client_secret=e246a609-243c-45f4-9f52-f75d9b2e85d9
 export server_url=https://stsstg.nih.gov
 # prod
 export host=fsivgl-rms01d
+export server_host=https://fsivgl-rms01d.ncifcrf.gov
+export server_api_proxy=rms2
 export client_host=https://fsabcl-onc03d.ncifcrf.gov
+export client_subpath=rmsv2

@@ -33,7 +33,7 @@ class Frame(TimeStampedModel, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     scan = models.ForeignKey('Scan', related_name='frames', on_delete=models.CASCADE)
     # content = S3FileField(null=True)
-    content = models.FileField(upload_to='uploads/%Y/%m/%d/')  # Files will be stored in MEDIA_ROOT/my_files/
+    content = models.FileField(upload_to='uploads/%Y/%m/%d/', null=True)  # Files will be stored in MEDIA_ROOT/my_files/
     # content = models.FileField
     raw_path = models.CharField(max_length=500, blank=False)
     frame_number = models.IntegerField(default=0)

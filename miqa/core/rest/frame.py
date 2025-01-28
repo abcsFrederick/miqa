@@ -138,10 +138,8 @@ class FrameViewSet(
         new_frame.raw_path = new_frame.content.path
         new_frame.save()
         if FrameSerializer(new_frame).data['extension'] in ['.svs', '.tif']:
-            print(1)
             wsi_thumbnail.delay(str(new_frame.id))
         else:
-            print(2)
             evaluate_frame_content.delay(str(new_frame.id))
         return Response(
             FrameSerializer(new_frame).data,

@@ -158,7 +158,7 @@ class MiqaMixin(ConfigMixin):
             "django.middleware.common.CommonMiddleware",
         ] + configuration.MIDDLEWARE
 class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
-    HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default=os.getenv('client_host'))
+    HOMEPAGE_REDIRECT_URL = values.Value(environ=True, default=os.path.join(os.getenv('client_host'), os.getenv('client_subpath')))
     DevelopmentBaseConfiguration.SOCIALACCOUNT_PROVIDERS = {
         "openid_connect": {
             "APPS": [
@@ -212,7 +212,7 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     @property
     def LOGIN_URL(self):
         """LOGIN_URL also needs to be behind MIQA_URL_PREFIX."""
-        return os.getenv('client_host') + '/accounts/itrust/login/'
+        return os.path.join(os.getenv('server_host'), os.getenv('server_api_proxy'), '/accounts/itrust/login/')
     # @property
     # def STATIC_URL(self):
     #     """Prepend the MIQA_URL_PREFIX to STATIC_URL."""
@@ -222,7 +222,7 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     def LOGIN_REDIRECT_URL(self):
         # Do not forget to set application in django with corresponding redirect url (with '/')
         """When login is completed without `next` set, redirect to MIQA_URL_PREFIX."""
-        return os.getenv('client_host')
+        return os.path.join(os.getenv('client_host'), os.getenv('client_subpath'))
         # return os.getenv('client_host') + '/rmsv2/index.html'
 
     @staticmethod
