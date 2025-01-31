@@ -212,7 +212,7 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     @property
     def LOGIN_URL(self):
         """LOGIN_URL also needs to be behind MIQA_URL_PREFIX."""
-        return os.path.join(os.getenv('server_host'), os.getenv('server_api_proxy'), '/accounts/itrust/login/')
+        return os.path.join(os.getenv('server_host'), os.getenv('server_api_proxy')) + '/accounts/itrust/login/'
     # @property
     # def STATIC_URL(self):
     #     """Prepend the MIQA_URL_PREFIX to STATIC_URL."""
