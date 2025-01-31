@@ -43,3 +43,4 @@ export server_api_proxy=rms2
 export client_host=https://clinomics.ccr.cancer.gov
 export client_subpath=rmsv2
 export workspace=fsivgl-rms01p
+export http_protocol = https

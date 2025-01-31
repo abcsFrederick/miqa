@@ -183,7 +183,7 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     ACCOUNT_UNIQUE_EMAIL = True 
     ACCOUNT_USERNAME_REQUIRED = True 
     ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
-    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = os.getenv('http_protocol')
 
     SOCIALACCOUNT_LOGIN_ON_GET = True
     SOCIALACCOUNT_EMAIL_REQUIRED = False
@@ -212,7 +212,7 @@ class DevelopmentConfiguration(MiqaMixin, DevelopmentBaseConfiguration):
     @property
     def LOGIN_URL(self):
         """LOGIN_URL also needs to be behind MIQA_URL_PREFIX."""
-        return os.path.join(os.getenv('server_host'), os.getenv('server_api_proxy'), '/accounts/itrust/login/')
+        return os.path.join(os.getenv('server_host'), os.getenv('server_api_proxy')) + '/accounts/itrust/login/'
     # @property
     # def STATIC_URL(self):
     #     """Prepend the MIQA_URL_PREFIX to STATIC_URL."""
