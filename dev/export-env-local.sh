@@ -40,4 +40,7 @@ export server_api_proxy=''
 export workspace=fsivgl-rms01d
 export client_host=http://localhost:8000
 export client_subpath=''
+<<<<<<< HEAD
 export http_protocol = http
+=======
+>>>>>>> 3b8fd5c52a8c33fc26776240028b4f7c8a9b4f9b
